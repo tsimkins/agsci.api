@@ -1,0 +1,48 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    xmlns:five="http://namespaces.zope.org/five"
+    i18n_domain="agsci.common">
+
+    <!-- Basic View -->
+
+    <browser:page
+        for="*"
+        name="api"
+        class=".BaseView"
+        permission="zope2.View"
+        layer="agsci.common.browser.interfaces.IThemeSpecific"
+        />
+
+    <!-- Plone Site Root -->
+
+    <browser:page
+        for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+        name="api"
+        class=".plone.PloneSiteView"
+        permission="zope2.View"
+        layer="agsci.common.browser.interfaces.IThemeSpecific"
+        />
+
+    <!-- Dexterity Image -->
+
+    <browser:page
+        for="plone.app.contenttypes.interfaces.IImage"
+        name="api"
+        class=".plone.image.ImageView"
+        permission="zope2.View"
+        layer="agsci.common.browser.interfaces.IThemeSpecific"
+        />
+
+    <!-- Dexterity File -->
+
+    <browser:page
+        for="plone.app.contenttypes.interfaces.IFile"
+        name="api"
+        class=".plone.file.FileView"
+        permission="zope2.View"
+        layer="agsci.common.browser.interfaces.IThemeSpecific"
+        />
+
+</configure>
