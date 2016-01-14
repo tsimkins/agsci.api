@@ -126,6 +126,7 @@ class BaseView(BrowserView):
             'SearchableText',
             'sortable_title',
             'total_comments',
+            'sync_uid',
         ]
 
     def filterData(self, data):
@@ -282,6 +283,57 @@ class BaseView(BrowserView):
         return ''
 
     HEAD.__roles__ = ('Anonymous',)
+
+    def getStructuredData(self, schemas=[], structures={}):
+        data = {}
+
+        # Reverse lookup for all fields used in structures
+        structured_fields = {}
+        
+        for (k,v) in structures.iteritems():
+            for i in v:
+                structured_fields[i] = k
+                
+        # Attach all custom fields from schema
+        fields = []
+        
+        # Get additional fieldnames from schem
+        for i in schemas:
+            fields.extend(i.names())
+            
+        fields.extend(structured_fields.keys())
+        
+        for i in set(fields):
+        
+            v = getattr(self.context, i, None)
+            
+            # If it's a text field
+            if hasattr(v, 'raw'):
+                v = v.raw
+            
+            # Handle values, if they exist
+            if v:
+
+                # Filter out blank list items
+                if isinstance(v, (list, tuple,)):
+                    v = [x for x in v if x]
+
+                # Group some fields into data structures for XML readability
+                if structured_fields.has_key(i):
+                    s = structured_fields.get(i)
+                    if not data.has_key(s):
+                        data[s] = {}
+                    if i.endswith('_%s' % s):
+                        data[s][i.replace('_%s' %s, '')] = v
+                    elif i.startswith('%s_' % s):
+                        data[s][i.replace('%s_' %s, '')] = v
+                    else:
+                        data[s][i] = v
+                # If we're not structuring the datas
+                else:
+                    data[i] = v
+
+        return data 
 
 class BaseContainerView(BaseView):
 
