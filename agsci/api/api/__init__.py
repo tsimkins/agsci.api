@@ -229,6 +229,10 @@ class BaseView(BrowserView):
         url = self.context.absolute_url()
         data['url'] = url
 
+        # Body text
+        if hasattr(self.context, 'text') and hasattr(self.context.text, 'raw'):
+            data['text'] = self.context.text.raw
+
         # Lead Image
          
         if data.get('hasLeadImage', False):
