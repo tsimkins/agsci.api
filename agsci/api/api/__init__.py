@@ -141,7 +141,7 @@ class BaseView(BrowserView):
                 'Category': 'category_level_1', 
                 'Program': 'category_level_2', 
                 'Topic': 'category_level_3', 
-                'Subtopic': 'filters'
+                'Filters': 'filters'
         }
         
                 
