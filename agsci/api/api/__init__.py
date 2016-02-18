@@ -12,6 +12,7 @@ from agsci.leadimage.content.behaviors import LeadImage
 from zope.publisher.interfaces import IPublishTraverse
 from zope.interface import implements
 import dicttoxml
+from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasOwnership
 
 # Prevent debug messages in log
 dicttoxml.set_debug(False)
@@ -27,7 +28,7 @@ class BaseView(BrowserView):
 
     data_format = None
     valid_data_formats = ['json', 'xml']
-    default_data_format = 'xml'        
+    default_data_format = 'xml'
 
     # Check if we're recursive based on URL parameter
     # Defaults to True
@@ -61,7 +62,7 @@ class BaseView(BrowserView):
     def format_key(self, name):
         s1 = first_cap_re.sub(r'\1_\2', name)
         return all_cap_re.sub(r'\1_\2', s1).lower()
-    
+
     @property
     def portal_catalog(self):
         return getToolByName(self.context, 'portal_catalog')
@@ -84,23 +85,47 @@ class BaseView(BrowserView):
     def getCatalogData(self):
         data = self.getMetadata()
         indexdata = self.getIndexData()
+
         for i in indexdata.keys():
             if not data.has_key(i):
                 data[i] = indexdata[i]
+
+        return self.fixData(data)
+
+    def fixData(self, data):
+
+        # Normalize keys to 'x_y_z' format
+        data = self.normalize_keys(data)
+
+        # Fix any value datatype issues
+        data = self.fix_value_datatypes(data)
+
+        # Exclude unused fields
+        data = self.exclude_unused_fields(data)
+
+        # Exclude empty non-required fields
+        data = self.remove_empty_nonrequired_fields(data)
+        
         return data
 
-    def getExcludeFields(self):
-        return [
+    def exclude_unused_fields(self, data):
+
+        # Remove excluded fields
+
+        exclude_fields = [
             'allowedRolesAndUsers',
             'author_name',
             'cmf_uid',
             'commentators',
+            'created',
             'Creator',
             'CreationDate',
             'Date',
             'EffectiveDate',
             'effectiveRange',
             'ExpirationDate',
+            'excludeFromNav',
+            'isFolderish',
             'getCommitteeNames',
             'getDepartmentNames',
             'getIcon',
@@ -118,6 +143,8 @@ class BaseView(BrowserView):
             'in_reply_to',
             'in_response_to',
             'last_comment_date',
+            'listCreators',
+            'listContributors',
             'meta_type',
             'ModificationDate',
             'object_provides',
@@ -129,144 +156,149 @@ class BaseView(BrowserView):
             'sync_uid',
         ]
 
-    def filterData(self, data):
+        for i in exclude_fields:
+            _i = self.format_key(i)
 
-        excluded_fields = self.getExcludeFields()
+            if data.has_key(_i):
+                del data[_i]
 
-        data['people'] = {}
-        data['dates'] = {}
-        
-        # Human to Magento metadata mapping
-        h2m = {
-                'Category': 'category_level_1', 
-                'Program': 'category_level_2', 
-                'Topic': 'category_level_3', 
-                'Filters': 'filters'
-        }
-        
-                
-        # First pass: Adjust data if necessary
-        for i in data.keys():
-        
-            # Skip custom data structure keys
-            if i in ('people', 'dates'):
-                continue
+        return data
 
-            # Remove Excluded and empty fields
-            if i in excluded_fields or not data.get(i):
-                del data[i]
-                continue
+    def normalize_keys(self, data):
 
-            v = data[i]
+        # Ensure keys from catalog indexes/metadata are non-camel case lowercase
+        for k in data.keys():
+            _k = self.format_key(k)
+            _k = self.rename_key(_k)
+
+            if k != _k:
+                data[_k] = data[k]
+                del data[k]
+
+        return data
+
+    def rename_key(self, i):
+
+        # Rename keys to match Magento import fields
+        rename_keys = [
+            ('UID' , 'plone_uid'),
+            ('Title' , 'name'),
+            ('modified' , 'updated_at'),
+            ('effective' , 'publish_date'),
+            ('expires' , 'product_expiration'),
+            ('Type' , 'product_type'),
+            ('getRawRelatedItems' , 'related_items'),
+            ('getId', 'short_name'),
+            ('review_state', 'plone_status'),
+            ('getRemoteUrl', 'remote_url'),
+            ('Category', 'category'),
+            ('Program', 'subcategory'),
+            ('Topic', 'category_level_3'),
+            ('Filters', 'filters'),
+            ('username', 'person_psu_user_id')
+        ]
+
+        rename_keys = dict([(self.format_key(j), k) for (j,k) in rename_keys])
+
+        return rename_keys.get(i, i)
+
+
+    def fix_value_datatypes(self, data):
+
+        for (k,v) in data.iteritems():
 
             if isinstance(v, DateTime):
-                data[i] = toISO(data[i])
-            elif i == 'listCreators':
-                data['people']['creators'] = data[i]
-                del data[i]
-            elif i == 'listContributors':
-                data['people']['contributors'] = data[i]
-                del data[i]
-            elif i == 'getRawRelatedItems':
-                data['related_items'] = data[i]
-                del data[i]
-            elif i == 'getId':
-                data['short_name'] = data[i]
-                del data[i]
-            elif i == 'review_state':
-                data['workflow_state'] = data[i]
-                del data[i]
-            elif i == 'getRemoteUrl':
-                data['remote_url'] = data[i]
-                del data[i]
-            elif i in h2m.keys():
-
-                # Only create the metadata structure if our item has one of the
-                # metadata values.  This contains a branch for Plone and a
-                # branch for Magento, since the values are the same, but the
-                # terminology is different.
-                
-                if not data.has_key('metadata'):            
-                    data['metadata'] = {
-                        'plone' : {},
-                        'magento' : {},
-                    }
-                
-                # Map Plone key to Magento key
-                magento_key = h2m.get(i).lower()
-                
-                # Populate values and delete original key
-                data['metadata']['plone'][i.lower()] = data[i]
-                data['metadata']['magento'][magento_key] = data[i]
-                del data[i]
+                data[k] = toISO(data[k])
 
             # XML type logic sees `zope.i18nmessageid.message.Message` as a list
             # and returns the type one letter at a time as a list.
             elif type(v).__name__ == 'Message':
-                data[i] = unicode(v)
-
-            # Separate block (intentionally not an 'elif') that puts all the 
-            # date fields under a 'dates' structure.
-            if i in ('created', 'expires', 'effective', 'modified'):
-                data['dates'][i] = data[i]
-                del data[i]                
-
-        # Second pass: Ensure keys are non-camel case lowercase                
-        for i in data.keys():
-            formatted_key = self.format_key(i)
-
-            if formatted_key != i:
-                data[formatted_key] = data[i]
-                del data[i]
+                data[k] = unicode(v)
 
         return data
 
+    def remove_empty_nonrequired_fields(self, data):
+
+        # Listing of required fields
+        required_fields = ['Title', ]
+
+        # Normalize
+        required_fields = [self.format_key(x) for x in required_fields]
+
+        for k in data.keys():
+            if k not in required_fields:
+                if not data[k]:
+                    del data[k]
+
+        return data
+
+    # Determine if we have a product, based on if we have the metadata 
+    # assigned to it.
+    def isProduct(self):
+        return IAtlasMetadata.providedBy(self.context)
+
     def getData(self):
 
+        # Pull data from catalog
         data = self.getCatalogData()
 
-        # Object URL
-        url = self.context.absolute_url()
-        data['url'] = url
+        if self.isProduct():
+
+            # Magento Status-es
+            data['product_status'] = 'N/A'            data['status'] = 'N/A'            data['visibility'] = 'N/A'
+
+            # Populate people information
+
+            # Assign primary contact id to first id in owners
+            if data.get('owners', []):
+                data['primary_contact_psu_user_id'] = data.get('owners')[0]
+
+            # Object URL
+            url = self.context.absolute_url()
+            data['url_key'] = url
+
+            # Lead Image
+            if data.get('has_lead_image', False):
+                img_field_name = 'leadimage'
+                img_field = getattr(self.context, img_field_name, None)
+    
+                (img_mimetype, img_data) = encode_blob(img_field, self.showBinaryData)
+    
+                if img_data:
+                    data['leadimage'] = {
+                        'data' : img_data,
+                        'mimetype' : img_mimetype,
+                        'caption' : LeadImage(self.context).leadimage_caption,
+                    }
+
+            # Related items
+            
+            # Remove acquisition wrapping, since otherwise this will also return
+            # the parent item's related items.
+            aq_base_context = aq_base(self.context)
+    
+            if hasattr(aq_base_context, 'relatedItems'):
+                v = [x.to_object.UID() for x in aq_base_context.relatedItems if x.to_object]
+                if v:
+                    data['related_items'] = v
+
+        else:
+            # Remove all the date fields under a 'dates' structure.
+            for k in ('publish_date', 'product_expiration', 'updated_at', 'plone_status', 'language'):
+                if data.has_key(k):
+                    del data[k]
 
         # Body text
         if hasattr(self.context, 'text') and hasattr(self.context.text, 'raw'):
             data['text'] = self.context.text.raw
 
-        # Lead Image
-         
-        if data.get('hasLeadImage', False):
-            img_field_name = 'leadimage'
-            img_field = getattr(self.context, img_field_name, None)
-
-            (img_mimetype, img_data) = encode_blob(img_field, self.showBinaryData)
-
-            if img_data:
-                data['leadimage'] = {
-                    'data' : img_data,
-                    'mimetype' : img_mimetype,
-                    'caption' : LeadImage(self.context).leadimage_caption,
-                }
-
-        # Related items
-        # Remove acquisition wrapping, since otherwise this will also return 
-        # the parent item's related items.
-        aq_base_context = aq_base(self.context)
-        
-        if hasattr(aq_base_context, 'relatedItems'):
-            data['related_items'] = [x.to_object.UID() for x in aq_base_context.relatedItems]
-
         return data
-    
-    def getFilteredData(self):
-        data = self.getData()
-        return self.filterData(data)        
 
     def getJSON(self):
-        return json.dumps(self.getFilteredData(), indent=4)
+        return json.dumps(self.getData(), indent=4)
 
     def getXML(self):
-        return dicttoxml.dicttoxml(self.getFilteredData(), custom_root='item')
+        return dicttoxml.dicttoxml(self.getData(), custom_root='item')
 
     def __call__(self):
         data_format = self.getDataFormat()
@@ -288,33 +320,21 @@ class BaseView(BrowserView):
 
     HEAD.__roles__ = ('Anonymous',)
 
-    def getStructuredData(self, schemas=[], structures={}):
+    def getSchemaData(self, schemas=[], fields=[]):
         data = {}
 
-        # Reverse lookup for all fields used in structures
-        structured_fields = {}
-        
-        for (k,v) in structures.iteritems():
-            for i in v:
-                structured_fields[i] = k
-                
         # Attach all custom fields from schema
-        fields = []
-        
-        # Get additional fieldnames from schem
         for i in schemas:
             fields.extend(i.names())
-            
-        fields.extend(structured_fields.keys())
-        
+
         for i in set(fields):
-        
+
             v = getattr(self.context, i, None)
-            
+
             # If it's a text field
             if hasattr(v, 'raw'):
                 v = v.raw
-            
+
             # Handle values, if they exist
             if v:
 
@@ -322,22 +342,11 @@ class BaseView(BrowserView):
                 if isinstance(v, (list, tuple,)):
                     v = [x for x in v if x]
 
-                # Group some fields into data structures for XML readability
-                if structured_fields.has_key(i):
-                    s = structured_fields.get(i)
-                    if not data.has_key(s):
-                        data[s] = {}
-                    if i.endswith('_%s' % s):
-                        data[s][i.replace('_%s' %s, '')] = v
-                    elif i.startswith('%s_' % s):
-                        data[s][i.replace('%s_' %s, '')] = v
-                    else:
-                        data[s][i] = v
-                # If we're not structuring the datas
-                else:
-                    data[i] = v
+                data[i] = v
 
-        return data 
+        data = self.fixData(data)
+
+        return data
 
 class BaseContainerView(BaseView):
 
@@ -349,20 +358,20 @@ class BaseContainerView(BaseView):
 
         if self.isRecursive:
             contents = self.getContents()
-            
+
             if contents:
                 data['contents'] = []
-                
+
                 for o in contents:
-    
+
                     api_data = o.restrictedTraverse('@@api')
-    
-                    data['contents'].append(api_data.getFilteredData())
+
+                    data['contents'].append(api_data.getData())
 
         return data
 
 def getAPIData(object_url):
-        
+
     # Grab JSON data
     json_url = '%s/@@api/json' % object_url
 
