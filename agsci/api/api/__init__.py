@@ -181,7 +181,7 @@ class BaseView(BrowserView):
 
         # Rename keys to match Magento import fields
         rename_keys = [
-            ('UID' , 'plone_uid'),
+            ('UID' , 'plone_id'),
             ('Title' , 'name'),
             ('modified' , 'updated_at'),
             ('effective' , 'publish_date'),
