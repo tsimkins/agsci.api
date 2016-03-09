@@ -12,7 +12,15 @@ from agsci.leadimage.content.behaviors import LeadImage
 from zope.publisher.interfaces import IPublishTraverse
 from zope.interface import implements
 import dicttoxml
-from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasOwnership
+
+# Custom Atlas Schemas
+from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasOwnership, IAtlasAudience
+from agsci.atlas.content.event import IEvent, _IEvent, IEventContact
+
+atlas_schemas = (
+                    IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent, 
+                    _IEvent, IEventContact,
+                )
 
 # Prevent debug messages in log
 dicttoxml.set_debug(False)
@@ -183,6 +191,7 @@ class BaseView(BrowserView):
         rename_keys = [
             ('UID' , 'plone_id'),
             ('Title' , 'name'),
+            ('Description' , 'short_description'),
             ('modified' , 'updated_at'),
             ('effective' , 'publish_date'),
             ('expires' , 'product_expiration'),
@@ -195,7 +204,21 @@ class BaseView(BrowserView):
             ('Program', 'subcategory'),
             ('Topic', 'category_level_3'),
             ('Filters', 'filters'),
-            ('username', 'person_psu_user_id')
+            ('username', 'person_psu_user_id'),
+            ('atlas_audience', 'audience'),
+            ('atlas_skill_level', 'skill_level'),
+            ('atlas_knowledge', 'knowledge'),
+            ('atlas_language', 'language'),
+            ('start', 'event_start_date'),
+            ('end', 'event_end_date'),
+            ('agenda', 'event_agenda'),
+            ('contact_email', 'email_address'),
+            ('email', 'email_address'),
+            ('street_address', 'address'),
+            ('office_address', 'address'),
+            ('office_city', 'city'),
+            ('office_state', 'state'),
+            ('office_zip_code', 'zip'),
         ]
 
         rename_keys = dict([(self.format_key(j), k) for (j,k) in rename_keys])
@@ -241,6 +264,10 @@ class BaseView(BrowserView):
 
         # Pull data from catalog
         data = self.getCatalogData()
+
+        sd = self.getSchemaData()
+        
+        data.update(sd)
 
         if self.isProduct():
 
@@ -290,12 +317,12 @@ class BaseView(BrowserView):
 
         # Body text
         if hasattr(self.context, 'text') and hasattr(self.context.text, 'raw'):
-            data['text'] = self.context.text.raw
+            data['description'] = self.context.text.raw
 
         return data
 
     def getJSON(self):
-        return json.dumps(self.getData(), indent=4)
+        return json.dumps(self.getData(), indent=4, sort_keys=True)
 
     def getXML(self):
         return dicttoxml.dicttoxml(self.getData(), custom_root='item')
@@ -323,9 +350,13 @@ class BaseView(BrowserView):
     def getSchemaData(self, schemas=[], fields=[]):
         data = {}
 
+        # Append schemas defined in Atlas products to schemas passed in
+        schemas.extend(atlas_schemas)
+
         # Attach all custom fields from schema
         for i in schemas:
-            fields.extend(i.names())
+            if i.providedBy(self.context):
+                fields.extend(i.names())
 
         for i in set(fields):
 
