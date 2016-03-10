@@ -350,8 +350,9 @@ class BaseView(BrowserView):
     def getSchemaData(self, schemas=[], fields=[]):
         data = {}
 
-        # Append schemas defined in Atlas products to schemas passed in
-        schemas.extend(atlas_schemas)
+        # Use the Atlas products schema if a schema is not passed in
+        if not schemas:
+            schemas.extend(atlas_schemas)
 
         # Attach all custom fields from schema
         for i in schemas:
