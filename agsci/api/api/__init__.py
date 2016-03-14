@@ -162,6 +162,10 @@ class BaseView(BrowserView):
             'sortable_title',
             'total_comments',
             'sync_uid',
+            'atlas_category',
+            'atlas_program',
+            'atlas_topic',  
+            'category_level_3',          
         ]
 
         for i in exclude_fields:
