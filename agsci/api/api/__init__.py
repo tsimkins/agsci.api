@@ -165,6 +165,10 @@ class BaseView(BrowserView):
             'atlas_category_level_1',
             'atlas_category_level_2',
             'atlas_category_level_3',
+            'filters',
+            'atlas_filters',
+            'home_or_commercial',
+            'atlas_home_or_commercial',
         ]
 
         for i in exclude_fields:
