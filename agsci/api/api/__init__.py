@@ -361,7 +361,8 @@ class BaseView(BrowserView):
 
         else:
             # Remove all the product fields for non-products
-            for k in ('publish_date', 'product_expiration', 'updated_at', 'plone_status', 'language'):
+            for k in ('publish_date', 'product_expiration', 'updated_at', 
+                      'plone_status', 'language', 'authors', 'contacts', 'owners'):
                 if data.has_key(k):
                     del data[k]
 
