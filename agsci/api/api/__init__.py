@@ -222,7 +222,8 @@ class BaseView(BrowserView):
             ('office_address', 'address'),
             ('office_city', 'city'),
             ('office_state', 'state'),
-            ('office_zip_code', 'zip'),
+            ('office_zip_code', 'zip_code'),
+            ('bio', 'description'),
         ]
 
         rename_keys = dict([(self.format_key(j), k) for (j,k) in rename_keys])
