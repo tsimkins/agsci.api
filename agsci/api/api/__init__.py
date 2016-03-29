@@ -273,17 +273,18 @@ class BaseView(BrowserView):
     # Not sure if this is required?
     #
     def minimizeCategories(self, c):
-        lengths = map(lambda x:len(x), c)
-        min_items =  min(lengths)
-        max_items =  max(lengths)        
-
-        if max_items > min_items:
-            for i in range(min_items,max_items):
-                base_items = filter(lambda x: len(x) == i, c)
-                base_items_plus = filter(lambda x: len(x) > i, c)
-                base_items_plus_adjusted = map(lambda x: tuple(x[0:i]), base_items_plus)
-                for j in set(base_items_plus_adjusted) & set(base_items):
-                    c.remove(j)
+        if c:
+            lengths = map(lambda x:len(x), c)
+            min_items =  min(lengths)
+            max_items =  max(lengths)        
+    
+            if max_items > min_items:
+                for i in range(min_items,max_items):
+                    base_items = filter(lambda x: len(x) == i, c)
+                    base_items_plus = filter(lambda x: len(x) > i, c)
+                    base_items_plus_adjusted = map(lambda x: tuple(x[0:i]), base_items_plus)
+                    for j in set(base_items_plus_adjusted) & set(base_items):
+                        c.remove(j)
 
         return c
 
