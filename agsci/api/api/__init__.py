@@ -162,10 +162,9 @@ class BaseView(BrowserView):
             'sortable_title',
             'total_comments',
             'sync_uid',
-            'atlas_category',
-            'atlas_program',
-            'atlas_topic',  
-            'category_level_3',          
+            'atlas_category_level_1',
+            'atlas_category_level_2',
+            'atlas_category_level_3',
         ]
 
         for i in exclude_fields:
@@ -204,9 +203,6 @@ class BaseView(BrowserView):
             ('getId', 'short_name'),
             ('review_state', 'plone_status'),
             ('getRemoteUrl', 'remote_url'),
-            ('Category', 'category'),
-            ('Program', 'subcategory'),
-            ('Topic', 'category_level_3'),
             ('Filters', 'filters'),
             ('username', 'person_psu_user_id'),
             ('atlas_audience', 'audience'),
@@ -264,6 +260,33 @@ class BaseView(BrowserView):
     def isProduct(self):
         return IAtlasMetadata.providedBy(self.context)
 
+    # Takes a list of variable-length tuples, and condenses that into the
+    # minimum set necessary to prevent duplication.  For example:
+    #
+    # (X,Y),
+    # (X,Y,Z),
+    #
+    # is minimized to:
+    #
+    # (X,Y,Z),
+    #
+    # Not sure if this is required?
+    #
+    def minimizeCategories(self, c):
+        lengths = map(lambda x:len(x), c)
+        min_items =  min(lengths)
+        max_items =  max(lengths)        
+
+        if max_items > min_items:
+            for i in range(min_items,max_items):
+                base_items = filter(lambda x: len(x) == i, c)
+                base_items_plus = filter(lambda x: len(x) > i, c)
+                base_items_plus_adjusted = map(lambda x: tuple(x[0:i]), base_items_plus)
+                for j in set(base_items_plus_adjusted) & set(base_items):
+                    c.remove(j)
+
+        return c
+
     def getData(self):
 
         # Pull data from catalog
@@ -276,7 +299,25 @@ class BaseView(BrowserView):
         if self.isProduct():
 
             # Magento Status-es
-            data['product_status'] = 'N/A'            data['status'] = 'N/A'            data['visibility'] = 'N/A'
+            data['product_status'] = 'N/A'
+            data['status'] = 'N/A'
+            data['visibility'] = 'N/A'
+
+            # Populate Category Level 1/2/3
+            category_level_keys = ['category_level%d' % x for x in range(1,4)]
+            
+            categories = []
+            
+            for i in category_level_keys:
+                j = data.get(i, [])
+
+                for k in j:
+                    categories.append(tuple(k.split(':')))
+                
+                if j:
+                    del data[i]
+
+            data['categories'] = self.minimizeCategories(categories)
 
             # Populate people information
 
@@ -286,7 +327,7 @@ class BaseView(BrowserView):
 
             # Object URL
             url = self.context.absolute_url()
-            data['url_key'] = url
+            data['external_url'] = url
 
             # Lead Image
             if data.get('has_lead_image', False):
@@ -314,7 +355,7 @@ class BaseView(BrowserView):
                     data['related_items'] = v
 
         else:
-            # Remove all the date fields under a 'dates' structure.
+            # Remove all the product fields for non-products
             for k in ('publish_date', 'product_expiration', 'updated_at', 'plone_status', 'language'):
                 if data.has_key(k):
                     del data[k]
