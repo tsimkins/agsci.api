@@ -43,14 +43,14 @@ class BaseView(BrowserView):
     # Defaults to True
     @property
     def isRecursive(self):
-        v = self.request.get('recursive', 'True')
+        v = self.request.form.get('recursive', 'True')
         return not (v.lower() in ('false', '0'))
 
     # Check if we're showing binary data
     # Defaults to True
     @property
     def showBinaryData(self):
-        v = self.request.get('bin', 'True')
+        v = self.request.form.get('bin', 'True')
         return not (v.lower() in ('false', '0'))
 
     def getDataFormat(self):
@@ -375,21 +375,9 @@ class BaseView(BrowserView):
     def getXML(self):
         return dicttoxml.dicttoxml(self.getData(), custom_root='item')
 
-    # Call the view, with the option of passing in data format, bin, and 
-    # recursive URL parameters for calling view from inside Plone.
-    def __call__(self, data_format=None, bin=True, recursive=True):
-    
-        # Use data_format if valid and passed through method
-        if not data_format or data_format not in self.valid_data_formats:
-            data_format = self.getDataFormat()
-            
-        # If bin is False, override request object
-        if not bin:
-            self.request['bin'] = 'false'
+    def __call__(self):
 
-        # If recursive is False, override request object
-        if not recursive:
-            self.request['recursive'] = 'false'
+        data_format = self.getDataFormat()
 
         # Pass back JSON or XML data, while setting request header.
         if data_format == 'json':
