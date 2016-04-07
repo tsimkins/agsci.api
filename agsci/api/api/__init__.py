@@ -3,15 +3,18 @@ from BeautifulSoup import BeautifulSoup
 from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
+from agsci.leadimage.content.behaviors import LeadImage
+from zope.interface import implements
+from zope.publisher.interfaces import IPublishTraverse
+
 import Missing
+import dicttoxml
 import json
 import re
 import urllib2
 import urlparse
-from agsci.leadimage.content.behaviors import LeadImage
-from zope.publisher.interfaces import IPublishTraverse
-from zope.interface import implements
-import dicttoxml
+
+from ..utilities import toISO, encode_blob
 
 # Custom Atlas Schemas
 from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasOwnership, IAtlasAudience
@@ -27,8 +30,6 @@ dicttoxml.set_debug(False)
 
 first_cap_re = re.compile('(.)([A-Z][a-z]+)')
 all_cap_re = re.compile('([a-z0-9])([A-Z])')
-
-from ..utilities import toISO, encode_blob
 
 class BaseView(BrowserView):
 
@@ -374,9 +375,23 @@ class BaseView(BrowserView):
     def getXML(self):
         return dicttoxml.dicttoxml(self.getData(), custom_root='item')
 
-    def __call__(self):
-        data_format = self.getDataFormat()
+    # Call the view, with the option of passing in data format, bin, and 
+    # recursive URL parameters for calling view from inside Plone.
+    def __call__(self, data_format=None, bin=True, recursive=True):
+    
+        # Use data_format if valid and passed through method
+        if not data_format or data_format not in self.valid_data_formats:
+            data_format = self.getDataFormat()
+            
+        # If bin is False, override request object
+        if not bin:
+            self.request['bin'] = 'false'
 
+        # If recursive is False, override request object
+        if not recursive:
+            self.request['recursive'] = 'false'
+
+        # Pass back JSON or XML data, while setting request header.
         if data_format == 'json':
             json = self.getJSON()
             self.request.response.setHeader('Content-Type', 'application/json')
