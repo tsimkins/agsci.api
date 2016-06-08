@@ -273,7 +273,7 @@ class BaseView(BrowserView):
     #
     # Not sure if this is required?
     #
-    def minimizeCategories(self, c):
+    def minimizeStructure(self, c):
         if c:
             lengths = map(lambda x:len(x), c)
             min_items =  min(lengths)
@@ -319,7 +319,23 @@ class BaseView(BrowserView):
                 if j:
                     del data[i]
 
-            data['categories'] = self.minimizeCategories(categories)
+            data['categories'] = self.minimizeStructure(categories)
+            
+            # Populate Extension Structure Information
+            extension_structure_keys = ['state_extension_team', 'program_team', 'curriculum']
+
+            extension_structure = []
+
+            for i in extension_structure_keys:
+                j = data.get(i, [])
+
+                for k in j:
+                    extension_structure.append(tuple(k.split(':')))
+                
+                if j:
+                    del data[i]
+
+            data['extension_structure'] = self.minimizeStructure(extension_structure)
 
             # Populate people information
 
