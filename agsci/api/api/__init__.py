@@ -166,6 +166,9 @@ class BaseView(BrowserView):
             'atlas_category_level_1',
             'atlas_category_level_2',
             'atlas_category_level_3',
+            'atlas_curriculum',
+            'atlas_program_team',
+            'atlas_state_extension_team',
         ]
 
         for i in exclude_fields:
@@ -273,7 +276,7 @@ class BaseView(BrowserView):
     #
     # Not sure if this is required?
     #
-    def minimizeStructure(self, c):
+    def minimizeStructure(self, c, keys=[]):
         if c:
             lengths = map(lambda x:len(x), c)
             min_items =  min(lengths)
@@ -286,6 +289,16 @@ class BaseView(BrowserView):
                     base_items_plus_adjusted = map(lambda x: tuple(x[0:i]), base_items_plus)
                     for j in set(base_items_plus_adjusted) & set(base_items):
                         c.remove(j)
+
+        # If a list of key names are provided, map back into a dict structure
+        # with the key name as the key, and the positional item in the list as
+        # a value.
+        if keys:
+        
+            def toDict(x):
+                return dict(zip(keys, x))
+        
+            return map(toDict, c)
 
         return c
 
@@ -335,7 +348,7 @@ class BaseView(BrowserView):
                 if j:
                     del data[i]
 
-            data['extension_structure'] = self.minimizeStructure(extension_structure)
+            data['extension_structure'] = self.minimizeStructure(extension_structure, keys=extension_structure_keys)
 
             # Populate people information
 
