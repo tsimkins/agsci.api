@@ -39,6 +39,38 @@ class BaseView(BrowserView):
     valid_data_formats = ['json', 'xml']
     default_data_format = 'xml'
 
+    # Default window for listing updated items
+    default_updated = 3600
+
+    # Check if we've been passed an `updated` URL parameter.  
+    # Returns default value of `default_updated` if a non-numeric value is 
+    # passed.  Otherwise, defaults to None
+    def getUpdated(self):
+        v = self.request.get('updated', None)
+        
+        if v:
+            
+            # Cast 'updated' parameter to an integer, using the default above
+            # if this fails
+            try:
+                v = int(v)
+            except ValueError:
+                v = self.default_updated
+                
+            return v
+        
+        return None
+
+    # Returns the date object indicated by the `updated` parameter
+    def getModifiedCriteria(self):
+        v = self.getUpdated()
+        
+        if v:
+            # Calculate minimum last modified date based on URL parameter
+            return (DateTime() - (v/86400.0))
+        
+        return None
+            
     # Check if we're recursive based on URL parameter
     # Defaults to True
     @property

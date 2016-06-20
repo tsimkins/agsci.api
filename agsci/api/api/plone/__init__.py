@@ -1,12 +1,8 @@
 from .. import BaseView
 from agsci.api.utilities import toISO
 from Products.CMFCore.utils import getToolByName
-from DateTime import DateTime
 
 class PloneSiteView(BaseView):
-
-    # Default window for listing updated items
-    default_updated = 3600
 
     # Listing of interfaces that products provide
     product_interfaces = ['agsci.atlas.content.behaviors.IAtlasMetadata',]
@@ -22,7 +18,7 @@ class PloneSiteView(BaseView):
 
         # URL parameters
         uid = self.request.get('UID', self.request.get('uid', None))
-        updated = self.request.get('updated', None)
+        updated = self.getUpdated()
 
         # Query for object having UID, if that parameter is provided
         if uid:
@@ -40,15 +36,8 @@ class PloneSiteView(BaseView):
             # Initialize contents structure
             data["contents"] = []
 
-            # Cast 'updated' parameter to an integer, using the default above
-            # if this fails
-            try:
-                updated = int(updated)
-            except ValueError:
-                updated = self.default_updated
-
             # Calculate minimum last modified date based on URL parameter
-            modified = DateTime() - (updated/86400.0)
+            modified = self.getModifiedCriteria()
 
             # Store 'updated' and 'modified' values in response data
             data['updated'] = updated
