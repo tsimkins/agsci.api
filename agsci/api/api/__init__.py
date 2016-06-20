@@ -21,7 +21,7 @@ from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasOwnership, IAtla
 from agsci.atlas.content.event import IEvent, _IEvent, IEventContact
 
 atlas_schemas = (
-                    IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent, 
+                    IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent,
                     _IEvent, IEventContact,
                 )
 
@@ -42,35 +42,35 @@ class BaseView(BrowserView):
     # Default window for listing updated items
     default_updated = 3600
 
-    # Check if we've been passed an `updated` URL parameter.  
-    # Returns default value of `default_updated` if a non-numeric value is 
+    # Check if we've been passed an `updated` URL parameter.
+    # Returns default value of `default_updated` if a non-numeric value is
     # passed.  Otherwise, defaults to None
     def getUpdated(self):
         v = self.request.get('updated', None)
-        
+
         if v:
-            
+
             # Cast 'updated' parameter to an integer, using the default above
             # if this fails
             try:
                 v = int(v)
             except ValueError:
                 v = self.default_updated
-                
+
             return v
-        
+
         return None
 
     # Returns the date object indicated by the `updated` parameter
     def getModifiedCriteria(self):
         v = self.getUpdated()
-        
+
         if v:
             # Calculate minimum last modified date based on URL parameter
             return (DateTime() - (v/86400.0))
-        
+
         return None
-            
+
     # Check if we're recursive based on URL parameter
     # Defaults to True
     @property
@@ -146,7 +146,7 @@ class BaseView(BrowserView):
 
         # Exclude empty non-required fields
         data = self.remove_empty_nonrequired_fields(data)
-        
+
         return data
 
     def exclude_unused_fields(self, data):
@@ -291,7 +291,7 @@ class BaseView(BrowserView):
 
         return data
 
-    # Determine if we have a product, based on if we have the metadata 
+    # Determine if we have a product, based on if we have the metadata
     # assigned to it.
     def isProduct(self):
         return IAtlasMetadata.providedBy(self.context)
@@ -312,8 +312,8 @@ class BaseView(BrowserView):
         if c:
             lengths = map(lambda x:len(x), c)
             min_items =  min(lengths)
-            max_items =  max(lengths)        
-    
+            max_items =  max(lengths)
+
             if max_items > min_items:
                 for i in range(min_items,max_items):
                     base_items = filter(lambda x: len(x) == i, c)
@@ -326,10 +326,10 @@ class BaseView(BrowserView):
         # with the key name as the key, and the positional item in the list as
         # a value.
         if keys:
-        
+
             def toDict(x):
                 return dict(zip(keys, x))
-        
+
             return map(toDict, c)
 
         return c
@@ -340,7 +340,7 @@ class BaseView(BrowserView):
         data = self.getCatalogData()
 
         sd = self.getSchemaData()
-        
+
         data.update(sd)
 
         if self.isProduct():
@@ -352,20 +352,20 @@ class BaseView(BrowserView):
 
             # Populate Category Level 1/2/3
             category_level_keys = ['category_level%d' % x for x in range(1,4)]
-            
+
             categories = []
-            
+
             for i in category_level_keys:
                 j = data.get(i, [])
 
                 for k in j:
                     categories.append(tuple(k.split(':')))
-                
+
                 if j:
                     del data[i]
 
             data['categories'] = self.minimizeStructure(categories)
-            
+
             # Populate Extension Structure Information
             extension_structure_keys = ['state_extension_team', 'program_team', 'curriculum']
 
@@ -376,7 +376,7 @@ class BaseView(BrowserView):
 
                 for k in j:
                     extension_structure.append(tuple(k.split(':')))
-                
+
                 if j:
                     del data[i]
 
@@ -396,9 +396,9 @@ class BaseView(BrowserView):
             if data.get('has_lead_image', False):
                 img_field_name = 'leadimage'
                 img_field = getattr(self.context, img_field_name, None)
-    
+
                 (img_mimetype, img_data) = encode_blob(img_field, self.showBinaryData)
-    
+
                 if img_data:
                     data['leadimage'] = {
                         'data' : img_data,
@@ -407,11 +407,11 @@ class BaseView(BrowserView):
                     }
 
             # Related items
-            
+
             # Remove acquisition wrapping, since otherwise this will also return
             # the parent item's related items.
             aq_base_context = aq_base(self.context)
-    
+
             if hasattr(aq_base_context, 'relatedItems'):
                 v = [x.to_object.UID() for x in aq_base_context.relatedItems if x.to_object]
                 if v:
@@ -419,7 +419,7 @@ class BaseView(BrowserView):
 
         else:
             # Remove all the product fields for non-products
-            for k in ('publish_date', 'product_expiration', 'updated_at', 
+            for k in ('publish_date', 'product_expiration', 'updated_at',
                       'plone_status', 'language', 'authors', 'contacts', 'owners'):
                 if data.has_key(k):
                     del data[k]
@@ -471,8 +471,18 @@ class BaseView(BrowserView):
                 fields.extend(i.names())
 
         for i in set(fields):
-
-            v = getattr(self.context, i, None)
+        
+            # Ref: 
+            # http://stackoverflow.com/questions/9790991/why-is-getattr-so-much-slower-than-self-dict-get
+            # The line below replaces:
+            # v = getattr(self.context, i, None)
+            # which took substantially longer (e.g. 8 seconds vs 2.5 minutes)
+            # when processing 300+ items in a folder.  Since the Dexterity 
+            # schema fields appear to be stored as local attributes, this should
+            # not cause problems. However, if it does, we can revert to the
+            # original behavior, or do so selectively. 
+        
+            v = self.context.__dict__.get(i, None)
 
             # If it's a text field
             if hasattr(v, 'raw'):
