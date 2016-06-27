@@ -3,6 +3,19 @@ from datetime import datetime, tzinfo
 import pytz
 import base64
 
+# Naively assume that all dates are in Eastern time
+default_timezone = 'US/Eastern'
+
+# Convert an ISO date string to a datetime with the correct timezone
+def iso_to_datetime(v):
+    try:
+        zope_date_value = DateTime(v)
+        dt = pytz.utc.localize(zope_date_value.toZone(default_timezone).utcdatetime())
+        return dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(default_timezone))
+    except:
+        return None
+
+# Convert a Plone DateTime to a ISO formated string
 def toISO(v):
             
     if isinstance(v, DateTime):
@@ -10,7 +23,7 @@ def toISO(v):
             tz = pytz.timezone(v.timezone())
         except pytz.UnknownTimeZoneError:
             # Because that's where we are.
-            tz = pytz.timezone('US/Eastern') 
+            tz = pytz.timezone(default_timezone) 
     
         tmp_date = datetime(v.year(), v.month(), v.day(), v.hour(), 
                             v.minute(), int(v.second()))
