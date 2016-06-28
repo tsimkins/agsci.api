@@ -6,12 +6,12 @@ import base64
 # Naively assume that all dates are in Eastern time
 default_timezone = 'US/Eastern'
 
-# Convert an ISO date string to a datetime with the correct timezone
+# Convert an ISO date string to a datetime with the UTC timezone
 def iso_to_datetime(v):
     try:
         zope_date_value = DateTime(v)
         dt = pytz.utc.localize(zope_date_value.toZone(default_timezone).utcdatetime())
-        return dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(default_timezone))
+        return dt.replace(tzinfo=pytz.utc)
     except:
         return None
 
