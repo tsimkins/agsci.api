@@ -346,9 +346,7 @@ class BaseView(BrowserView):
         if self.isProduct():
 
             # Magento Status-es
-            data['product_status'] = 'N/A'
-            data['status'] = 'N/A'
-            data['visibility'] = 'N/A'
+            data['visibility'] = 'Catalog, Search'
 
             # Populate Category Level 1/2/3
             category_level_keys = ['category_level%d' % x for x in range(1,4)]
