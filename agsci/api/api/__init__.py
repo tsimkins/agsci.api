@@ -18,14 +18,15 @@ from ..utilities import toISO, encode_blob
 
 # Custom Atlas Schemas
 from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasProductMetadata, \
-     IAtlasEPASMetadata, IAtlasOwnership, IAtlasAudience, IAtlasCounty
+     IAtlasEPASMetadata, IAtlasOwnership, IAtlasAudience, IAtlasCounty, \
+     IAtlasContact, IAtlasLocation
 
 from agsci.atlas.content.event import IEvent, _IEvent, IEventContact
 
 atlas_schemas = (
                     IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent, 
                     _IEvent, IEventContact, IAtlasCounty, IAtlasProductMetadata, 
-                    IAtlasEPASMetadata
+                    IAtlasEPASMetadata, IAtlasContact, IAtlasLocation
                 )
 
 # Prevent debug messages in log
@@ -253,10 +254,9 @@ class BaseView(BrowserView):
             ('contact_email', 'email_address'),
             ('email', 'email_address'),
             ('street_address', 'address'),
-            ('office_address', 'address'),
-            ('office_city', 'city'),
-            ('office_state', 'state'),
-            ('office_zip_code', 'zip_code'),
+            ('zip_code', 'zip'),
+            ('phone_number', 'phone'),
+            ('fax_number', 'fax'),
             ('bio', 'description'),
             ('job_titles', 'person_job_titles'),
             ('classifications', 'person_classification'),
