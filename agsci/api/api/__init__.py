@@ -261,6 +261,7 @@ class BaseView(BrowserView):
             ('job_titles', 'person_job_titles'),
             ('classifications', 'person_classification'),
             ('areas_expertise', 'expertise'),            
+            ('primary_profile_url', 'educator_primary_profile_url'), 
         ]
 
         rename_keys = dict([(self.format_key(j), k) for (j,k) in rename_keys])
