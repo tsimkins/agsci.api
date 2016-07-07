@@ -17,12 +17,15 @@ import urlparse
 from ..utilities import toISO, encode_blob
 
 # Custom Atlas Schemas
-from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasOwnership, IAtlasAudience
+from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasProductMetadata, \
+     IAtlasEPASMetadata, IAtlasOwnership, IAtlasAudience, IAtlasCounty
+
 from agsci.atlas.content.event import IEvent, _IEvent, IEventContact
 
 atlas_schemas = (
-                    IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent,
-                    _IEvent, IEventContact,
+                    IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent, 
+                    _IEvent, IEventContact, IAtlasCounty, IAtlasProductMetadata, 
+                    IAtlasEPASMetadata
                 )
 
 # Prevent debug messages in log
@@ -255,6 +258,9 @@ class BaseView(BrowserView):
             ('office_state', 'state'),
             ('office_zip_code', 'zip_code'),
             ('bio', 'description'),
+            ('job_titles', 'person_job_titles'),
+            ('classifications', 'person_classification'),
+            ('areas_expertise', 'expertise'),            
         ]
 
         rename_keys = dict([(self.format_key(j), k) for (j,k) in rename_keys])
