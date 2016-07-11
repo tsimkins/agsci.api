@@ -4,6 +4,8 @@ from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
 from agsci.leadimage.content.behaviors import LeadImage
+from decimal import Decimal
+from datetime import datetime
 from zope.interface import implements
 from zope.publisher.interfaces import IPublishTraverse
 
@@ -286,8 +288,17 @@ class BaseView(BrowserView):
 
         for (k,v) in data.iteritems():
 
-            if isinstance(v, DateTime):
+            # If we're a datetime, convert to DateTime and use the ISO representation string
+            if isinstance(v, datetime):
+                data[k] = toISO(DateTime(data[k]))
+
+            # If we're a DateTime, use the ISO representation string
+            elif isinstance(v, DateTime):
                 data[k] = toISO(data[k])
+
+            # Convert decimal to string with two decimal places.
+            elif isinstance(v, Decimal):
+                data[k] = '%0.2f' % v
 
             # XML type logic sees `zope.i18nmessageid.message.Message` as a list
             # and returns the type one letter at a time as a list.
