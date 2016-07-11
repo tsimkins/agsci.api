@@ -19,14 +19,16 @@ from ..utilities import toISO, encode_blob
 # Custom Atlas Schemas
 from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasProductMetadata, \
      IAtlasEPASMetadata, IAtlasOwnership, IAtlasAudience, IAtlasCounty, \
-     IAtlasContact, IAtlasLocation
+     IAtlasCountyFields, IAtlasContact, IAtlasLocation, IAtlasComplexEvent, \
+     IAtlasForSaleProduct
 
-from agsci.atlas.content.event import IEvent, _IEvent, IEventContact
+from agsci.atlas.content.event import IEvent, _IEvent
 
 atlas_schemas = (
-                    IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent, 
-                    _IEvent, IEventContact, IAtlasCounty, IAtlasProductMetadata, 
-                    IAtlasEPASMetadata, IAtlasContact, IAtlasLocation
+                    IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent,
+                    _IEvent, IAtlasCounty, IAtlasCountyFields, IAtlasProductMetadata,
+                    IAtlasEPASMetadata, IAtlasContact, IAtlasLocation, IAtlasComplexEvent,
+                    IAtlasForSaleProduct
                 )
 
 # Prevent debug messages in log
@@ -260,8 +262,19 @@ class BaseView(BrowserView):
             ('bio', 'description'),
             ('job_titles', 'person_job_titles'),
             ('classifications', 'person_classification'),
-            ('areas_expertise', 'expertise'),            
-            ('primary_profile_url', 'educator_primary_profile_url'), 
+            ('areas_expertise', 'expertise'),
+            ('primary_profile_url', 'educator_primary_profile_url'),
+            ('registration_help_name', 'event_registration_help_name'),
+            ('registration_help_phone', 'event_registration_help_phone'),
+            ('registration_help_email', 'event_registration_help_email'),
+            ('registrant_status', 'event_registrant_status'),
+            ('registrant_type', 'event_registrant_type'),
+            ('registration_status', 'event_registration_status'),
+            ('agenda', 'event_agenda'),
+            ('capacity', 'event_capacity'),
+            ('walkin', 'event_walkin'),
+            ('cancellation_deadline', 'cancelation_deadline'),  # Misspelled per http://grammarist.com/spelling/cancel/
+
         ]
 
         rename_keys = dict([(self.format_key(j), k) for (j,k) in rename_keys])
@@ -476,17 +489,17 @@ class BaseView(BrowserView):
                 fields.extend(i.names())
 
         for i in set(fields):
-        
-            # Ref: 
+
+            # Ref:
             # http://stackoverflow.com/questions/9790991/why-is-getattr-so-much-slower-than-self-dict-get
             # The line below replaces:
             # v = getattr(self.context, i, None)
             # which took substantially longer (e.g. 8 seconds vs 2.5 minutes)
-            # when processing 300+ items in a folder.  Since the Dexterity 
+            # when processing 300+ items in a folder.  Since the Dexterity
             # schema fields appear to be stored as local attributes, this should
             # not cause problems. However, if it does, we can revert to the
-            # original behavior, or do so selectively. 
-        
+            # original behavior, or do so selectively.
+
             v = self.context.__dict__.get(i, None)
 
             # If it's a text field
