@@ -26,11 +26,15 @@ from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasProductMetadata,
 
 from agsci.atlas.content.event import IEvent, _IEvent
 
+from agsci.atlas.content.event.webinar import IWebinar
+
+from agsci.atlas.content.event.webinar.recording import IWebinarRecording
+
 atlas_schemas = (
                     IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent,
                     _IEvent, IAtlasCounty, IAtlasCountyFields, IAtlasProductMetadata,
                     IAtlasEPASMetadata, IAtlasContact, IAtlasLocation, IAtlasComplexEvent,
-                    IAtlasForSaleProduct
+                    IAtlasForSaleProduct, IWebinar, IWebinarRecording
                 )
 
 # Prevent debug messages in log
@@ -310,7 +314,7 @@ class BaseView(BrowserView):
     def remove_empty_nonrequired_fields(self, data):
 
         # Listing of required fields
-        required_fields = ['Title', ]
+        required_fields = ['Title', 'available_to_public']
 
         # Normalize
         required_fields = [self.format_key(x) for x in required_fields]
