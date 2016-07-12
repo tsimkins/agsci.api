@@ -188,6 +188,7 @@ class BaseView(BrowserView):
             'getRawCommittees',
             'getRawDepartments',
             'getRawPeople',
+            'getRawRelatedItems',
             'getRawSpecialties',
             'getResearchTopics',
             'getSortableName',
@@ -247,7 +248,6 @@ class BaseView(BrowserView):
             ('effective' , 'publish_date'),
             ('expires' , 'product_expiration'),
             ('Type' , 'product_type'),
-            ('getRawRelatedItems' , 'related_items'),
             ('getId', 'short_name'),
             ('review_state', 'plone_status'),
             ('getRemoteUrl', 'remote_url'),
@@ -438,17 +438,6 @@ class BaseView(BrowserView):
                         'mimetype' : img_mimetype,
                         'caption' : LeadImage(self.context).leadimage_caption,
                     }
-
-            # Related items
-
-            # Remove acquisition wrapping, since otherwise this will also return
-            # the parent item's related items.
-            aq_base_context = aq_base(self.context)
-
-            if hasattr(aq_base_context, 'relatedItems'):
-                v = [x.to_object.UID() for x in aq_base_context.relatedItems if x.to_object]
-                if v:
-                    data['related_items'] = v
 
         else:
             # Remove all the product fields for non-products
