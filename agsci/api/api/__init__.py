@@ -21,8 +21,7 @@ from ..utilities import toISO, encode_blob
 # Custom Atlas Schemas
 from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasProductMetadata, \
      IAtlasEPASMetadata, IAtlasOwnership, IAtlasAudience, IAtlasCounty, \
-     IAtlasCountyFields, IAtlasContact, IAtlasLocation, IAtlasComplexEvent, \
-     IAtlasForSaleProduct
+     IAtlasCountyFields, IAtlasContact, IAtlasLocation, IAtlasForSaleProduct
 
 from agsci.atlas.content.event import IEvent, _IEvent
 
@@ -30,10 +29,12 @@ from agsci.atlas.content.event.webinar import IWebinar
 
 from agsci.atlas.content.event.webinar.recording import IWebinarRecording
 
+from agsci.atlas.content.event.cvent import ICventEvent
+
 atlas_schemas = (
                     IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent,
                     _IEvent, IAtlasCounty, IAtlasCountyFields, IAtlasProductMetadata,
-                    IAtlasEPASMetadata, IAtlasContact, IAtlasLocation, IAtlasComplexEvent,
+                    IAtlasEPASMetadata, IAtlasContact, IAtlasLocation, ICventEvent,
                     IAtlasForSaleProduct, IWebinar, IWebinarRecording
                 )
 
@@ -379,6 +380,14 @@ class BaseView(BrowserView):
         data.update(sd)
 
         if self.isProduct():
+
+            # Set `product_platform` default
+            data['product_platform'] = 'Plone'
+
+            # Set `product_platform` and `product_type` if we're a Cvent event
+            if ICventEvent.providedBy(self.context):
+                data['product_platform'] = 'Cvent'
+                data['product_type'] = getattr(self.context, 'atlas_event_type', 'Workshop')
 
             # Magento Status-es
             data['visibility'] = 'Catalog, Search'
