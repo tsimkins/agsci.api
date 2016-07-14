@@ -18,7 +18,7 @@ class PloneSiteView(BaseView):
 
         # URL parameters
         uid = self.request.get('UID', self.request.get('uid', None))
-        updated = self.getUpdated()
+        modified = self.getModifiedCriteria()
 
         # Query for object having UID, if that parameter is provided
         if uid:
@@ -31,22 +31,18 @@ class PloneSiteView(BaseView):
 
         # Otherwise, query for all products updated within X seconds, excluding
         # types configured above
-        elif updated:
+        elif modified:
 
             # Initialize contents structure
             data["contents"] = []
 
-            # Calculate minimum last modified date based on URL parameter
-            modified = self.getModifiedCriteria()
-
-            # Store 'updated' and 'modified' values in response data
-            data['updated'] = updated
-            data['modified'] = toISO(modified)
+            # Store 'modified' query string in response data
+            data['modified'] = repr(modified)
 
             # Construct catalog query based on product types 
             query = {
                         'object_provides' : self.product_interfaces,
-                        'modified' : {'range' : 'min', 'query' : modified}
+                        'modified' : modified,
                     }
 
             # Query catalog

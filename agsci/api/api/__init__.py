@@ -70,17 +70,65 @@ class BaseView(BrowserView):
             except ValueError:
                 v = self.default_updated
 
-            return v
+            return (DateTime() - (v/86400.0))
 
         return None
 
-    # Returns the date object indicated by the `updated` parameter
-    def getModifiedCriteria(self):
-        v = self.getUpdated()
+    # Check if we've been passed an `updated_min` and/or an `updated_max`
+    # URL parameter.
+    # Returns a range tuple (min,max) if they're present.
+    # Otherwise, defaults to None
+    def getUpdatedRange(self):
 
-        if v:
-            # Calculate minimum last modified date based on URL parameter
-            return (DateTime() - (v/86400.0))
+        # Get URL parameters
+        v_min = self.request.get('updated_min', None) 
+        v_max = self.request.get('updated_max', None)
+
+        # If no parameters were passed in, return None
+        if not (v_min or v_max):
+            return None
+
+        # Set defaults
+        v_min_default = DateTime(0) # Unix epoch
+        v_max_default = DateTime() # Now
+        
+        # If there's not a v_min parameter, set it to the default
+        # Otherwise, try to make it into a DateTime()
+        # If that fails, set it to the default
+        if not v_min:
+            v_min = v_min_default 
+
+        else:            
+            try:
+                v_min = DateTime(v_min)
+            except SyntaxError:
+                v_min = v_min_default
+
+        # Do the same for v_max
+        if not v_max:
+            v_max = v_max_default
+        else:
+            try:
+                v_max = DateTime(v_max)
+            except SyntaxError:
+                v_max = v_max_default
+
+        # Return the range tuple
+        return (v_min, v_max)
+
+    # Calculate last modified date criteria based on URL parameters
+    # Returns a `dict` with a range and query keys.
+    def getModifiedCriteria(self):
+
+        updated_seconds_ago = self.getUpdated()
+
+        if updated_seconds_ago:
+            return {'range' : 'min', 'query' : updated_seconds_ago}
+
+        updated_range = self.getUpdatedRange()
+        
+        if updated_range:
+            return {'range' : 'min:max', 'query' : updated_range}
 
         return None
 
@@ -127,14 +175,22 @@ class BaseView(BrowserView):
         return text
 
     def getMetadata(self):
-        m = self.portal_catalog.getMetadataForUID("/".join(self.context.getPhysicalPath()))
+        try:
+            m = self.portal_catalog.getMetadataForUID("/".join(self.context.getPhysicalPath()))
+        except:
+            return {} # Return an empty dict if there's an issue with the catalog
+
         for i in m.keys():
             if m[i] == Missing.Value:
                 m[i] = ''
+
         return m
 
     def getIndexData(self):
-        return self.portal_catalog.getIndexDataForUID("/".join(self.context.getPhysicalPath()))
+        try:
+            return self.portal_catalog.getIndexDataForUID("/".join(self.context.getPhysicalPath()))
+        except:
+            return {} # Return an empty dict if there's an issue with the catalog
 
     def getCatalogData(self):
         data = self.getMetadata()
