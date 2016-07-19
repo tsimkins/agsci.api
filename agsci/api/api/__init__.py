@@ -21,7 +21,8 @@ from ..utilities import toISO, encode_blob
 # Custom Atlas Schemas
 from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasProductMetadata, \
      IAtlasEPASMetadata, IAtlasOwnership, IAtlasAudience, IAtlasCounty, \
-     IAtlasCountyFields, IAtlasContact, IAtlasLocation, IAtlasForSaleProduct
+     IAtlasCountyFields, IAtlasContact, IAtlasLocation, IAtlasForSaleProduct, \
+     IAtlasFilterSets
 
 from agsci.atlas.content.event import IEvent, _IEvent
 
@@ -35,7 +36,7 @@ atlas_schemas = (
                     IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent,
                     _IEvent, IAtlasCounty, IAtlasCountyFields, IAtlasProductMetadata,
                     IAtlasEPASMetadata, IAtlasContact, IAtlasLocation, ICventEvent,
-                    IAtlasForSaleProduct, IWebinar, IWebinarRecording
+                    IAtlasForSaleProduct, IWebinar, IWebinarRecording, IAtlasFilterSets
                 )
 
 # Prevent debug messages in log
@@ -81,7 +82,7 @@ class BaseView(BrowserView):
     def getUpdatedRange(self):
 
         # Get URL parameters
-        v_min = self.request.get('updated_min', None) 
+        v_min = self.request.get('updated_min', None)
         v_max = self.request.get('updated_max', None)
 
         # If no parameters were passed in, return None
@@ -91,14 +92,14 @@ class BaseView(BrowserView):
         # Set defaults
         v_min_default = DateTime(0) # Unix epoch
         v_max_default = DateTime() # Now
-        
+
         # If there's not a v_min parameter, set it to the default
         # Otherwise, try to make it into a DateTime()
         # If that fails, set it to the default
         if not v_min:
-            v_min = v_min_default 
+            v_min = v_min_default
 
-        else:            
+        else:
             try:
                 v_min = DateTime(v_min)
             except SyntaxError:
@@ -126,7 +127,7 @@ class BaseView(BrowserView):
             return {'range' : 'min', 'query' : updated_seconds_ago}
 
         updated_range = self.getUpdatedRange()
-        
+
         if updated_range:
             return {'range' : 'min:max', 'query' : updated_range}
 
@@ -309,10 +310,6 @@ class BaseView(BrowserView):
             ('review_state', 'plone_status'),
             ('getRemoteUrl', 'remote_url'),
             ('username', 'person_psu_user_id'),
-            ('atlas_audience', 'audience'),
-            ('atlas_skill_level', 'skill_level'),
-            ('atlas_knowledge', 'knowledge'),
-            ('atlas_language', 'language'),
             ('start', 'event_start_date'),
             ('end', 'event_end_date'),
             ('agenda', 'event_agenda'),
@@ -337,12 +334,22 @@ class BaseView(BrowserView):
             ('capacity', 'event_capacity'),
             ('walkin', 'event_walkin'),
             ('cancellation_deadline', 'cancelation_deadline'),  # Misspelled per http://grammarist.com/spelling/cancel/
-
         ]
 
+        # Make dict out of key/value tuples
         rename_keys = dict([(self.format_key(j), k) for (j,k) in rename_keys])
 
-        return rename_keys.get(i, i)
+        # Resolve explicitly renamed field into `v`, if it exists
+        v = rename_keys.get(i, i)
+
+        # Implicitly strip 'atlas_' from the beginning of any keys to simplify
+        # the list of renamed keys
+        for j in ['atlas_']:
+            if v.startswith(j):
+                v = v[len(j):]
+
+        # Return the renamed value
+        return v
 
 
     def fix_value_datatypes(self, data):
