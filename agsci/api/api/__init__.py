@@ -22,6 +22,7 @@ from ..utilities import toISO, encode_blob
 from agsci.atlas.content import atlas_schemas
 from agsci.atlas.content.behaviors import IAtlasMetadata
 from agsci.atlas.content.event.cvent import ICventEvent
+from agsci.atlas.content.publication import IPublication
 
 # Prevent debug messages in log
 dicttoxml.set_debug(False)
@@ -435,6 +436,10 @@ class BaseView(BrowserView):
             if ICventEvent.providedBy(self.context):
                 data['product_platform'] = 'Cvent'
                 data['product_type'] = getattr(self.context, 'atlas_event_type', 'Workshop')
+
+            # Set `product_platform` if we're a Publication
+            elif IPublication.providedBy(self.context):
+                data['product_platform'] = 'Salesforce'
 
             # Magento Status-es
             data['visibility'] = 'Catalog, Search'
