@@ -19,25 +19,9 @@ import urlparse
 from ..utilities import toISO, encode_blob
 
 # Custom Atlas Schemas
-from agsci.atlas.content.behaviors import IAtlasMetadata, IAtlasProductMetadata, \
-     IAtlasEPASMetadata, IAtlasOwnership, IAtlasAudience, IAtlasCounty, \
-     IAtlasCountyFields, IAtlasContact, IAtlasLocation, IAtlasForSaleProduct, \
-     IAtlasFilterSets
-
-from agsci.atlas.content.event import IEvent, _IEvent
-
-from agsci.atlas.content.event.webinar import IWebinar
-
-from agsci.atlas.content.event.webinar.recording import IWebinarRecording
-
+from agsci.atlas.content import atlas_schemas
+from agsci.atlas.content.behaviors import IAtlasMetadata
 from agsci.atlas.content.event.cvent import ICventEvent
-
-atlas_schemas = (
-                    IAtlasMetadata, IAtlasOwnership, IAtlasAudience, IEvent,
-                    _IEvent, IAtlasCounty, IAtlasCountyFields, IAtlasProductMetadata,
-                    IAtlasEPASMetadata, IAtlasContact, IAtlasLocation, ICventEvent,
-                    IAtlasForSaleProduct, IWebinar, IWebinarRecording, IAtlasFilterSets
-                )
 
 # Prevent debug messages in log
 dicttoxml.set_debug(False)
@@ -497,19 +481,43 @@ class BaseView(BrowserView):
             url = self.context.absolute_url()
             data['external_url'] = url
 
-            # Lead Image
-            if data.get('has_lead_image', False):
-                img_field_name = 'leadimage'
-                img_field = getattr(self.context, img_field_name, None)
+            # Handle binary data fields by either encoding them base64, or removing them
 
-                (img_mimetype, img_data) = encode_blob(img_field, self.showBinaryData)
+            # If we DO show binary data
+            if self.showBinaryData:
 
-                if img_data:
-                    data['leadimage'] = {
-                        'data' : img_data,
-                        'mimetype' : img_mimetype,
-                        'caption' : LeadImage(self.context).leadimage_caption,
-                    }
+                # Lead Image
+                if data.get('has_lead_image', False):
+                    img_field_name = 'leadimage'
+                    img_field = getattr(self.context, img_field_name, None)
+    
+                    (img_mimetype, img_data) = encode_blob(img_field, self.showBinaryData)
+    
+                    if img_data:
+                        data['leadimage'] = {
+                            'data' : img_data,
+                            'mimetype' : img_mimetype,
+                            'caption' : LeadImage(self.context).leadimage_caption,
+                        }
+    
+                # File Field
+                if data.get('file', None) and self.showBinaryData:
+                    file_field_name = 'file'
+                    file_field = getattr(self.context, file_field_name, None)
+    
+                    (file_mimetype, file_data) = encode_blob(file_field, self.showBinaryData)
+    
+                    if file_data:
+                        data['file'] = {
+                            'data' : file_data,
+                            'mimetype' : file_mimetype,
+                        }
+
+            # If we DO NOT show binary data
+            else:
+                for i in ['file', 'image', 'leadimage']:
+                    if data.has_key(i):
+                        del data[i]
 
         else:
             # Remove all the product fields for non-products
