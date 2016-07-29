@@ -3,6 +3,7 @@ from BeautifulSoup import BeautifulSoup
 from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
+from plone.namedfile.file import NamedBlobFile
 from agsci.leadimage.content.behaviors import LeadImage
 from decimal import Decimal
 from datetime import datetime
@@ -357,6 +358,14 @@ class BaseView(BrowserView):
             # and returns the type one letter at a time as a list.
             elif type(v).__name__ == 'Message':
                 data[k] = unicode(v)
+            
+            elif isinstance(v, NamedBlobFile):
+                (file_mimetype, file_data) = encode_blob(v, self.showBinaryData)
+
+                data[k] = {
+                    'data' : file_data,
+                    'mimetype' : file_mimetype,
+                }
 
         return data
 
