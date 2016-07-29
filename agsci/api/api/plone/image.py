@@ -1,5 +1,5 @@
 from .. import BaseView
-from agsci.api.utilities import encode_blob
+from agsci.common.utilities import encode_blob
 
 class ImageView(BaseView):
 
