@@ -20,7 +20,7 @@
     <browser:page
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
         name="api"
-        class=".plone.PloneSiteView"
+        class=".plone_types.PloneSiteView"
         permission="zope2.View"
         layer="agsci.common.browser.interfaces.IThemeSpecific"
         />
@@ -30,7 +30,7 @@
     <browser:page
         for="plone.app.contenttypes.interfaces.IImage"
         name="api"
-        class=".plone.image.ImageView"
+        class=".plone_types.image.ImageView"
         permission="zope2.View"
         layer="agsci.common.browser.interfaces.IThemeSpecific"
         />
@@ -40,7 +40,7 @@
     <browser:page
         for="plone.app.contenttypes.interfaces.IFile"
         name="api"
-        class=".plone.file.FileView"
+        class=".plone_types.file.FileView"
         permission="zope2.View"
         layer="agsci.common.browser.interfaces.IThemeSpecific"
         />
