@@ -358,7 +358,7 @@ class BaseView(BrowserView):
             # and returns the type one letter at a time as a list.
             elif type(v).__name__ == 'Message':
                 data[k] = unicode(v)
-            
+
             elif isinstance(v, NamedBlobFile):
                 (file_mimetype, file_data) = encode_blob(v, self.showBinaryData)
 
@@ -504,23 +504,23 @@ class BaseView(BrowserView):
                 if data.get('has_lead_image', False):
                     img_field_name = 'leadimage'
                     img_field = getattr(self.context, img_field_name, None)
-    
+
                     (img_mimetype, img_data) = encode_blob(img_field, self.showBinaryData)
-    
+
                     if img_data:
                         data['leadimage'] = {
                             'data' : img_data,
                             'mimetype' : img_mimetype,
                             'caption' : LeadImage(self.context).leadimage_caption,
                         }
-    
+
                 # File Field
                 if data.get('file', None) and self.showBinaryData:
                     file_field_name = 'file'
                     file_field = getattr(self.context, file_field_name, None)
-    
+
                     (file_mimetype, file_data) = encode_blob(file_field, self.showBinaryData)
-    
+
                     if file_data:
                         data['file'] = {
                             'data' : file_data,
@@ -555,6 +555,10 @@ class BaseView(BrowserView):
     def __call__(self):
 
         data_format = self.getDataFormat()
+
+        # Set headers to prevent caching
+        self.request.response.setHeader('Pragma', 'no-cache')
+        self.request.response.setHeader('Cache-Control', 'private, no-cache, no-store')
 
         # Pass back JSON or XML data, while setting request header.
         if data_format == 'json':
