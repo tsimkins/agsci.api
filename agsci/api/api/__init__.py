@@ -316,7 +316,6 @@ class BaseView(BrowserView):
             ('registrant_status', 'event_registrant_status'),
             ('registrant_type', 'event_registrant_type'),
             ('registration_status', 'event_registration_status'),
-            ('agenda', 'event_agenda'),
             ('capacity', 'event_capacity'),
             ('walkin', 'event_walkin'),
             ('cancellation_deadline', 'cancelation_deadline'),  # Misspelled per http://grammarist.com/spelling/cancel/
