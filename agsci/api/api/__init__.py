@@ -358,6 +358,7 @@ class BaseView(BrowserView):
             elif type(v).__name__ == 'Message':
                 data[k] = unicode(v)
 
+            # If this is a file, add additional mimetype info
             elif isinstance(v, NamedBlobFile):
                 (file_mimetype, file_data) = encode_blob(v, self.showBinaryData)
 
@@ -365,6 +366,18 @@ class BaseView(BrowserView):
                     'data' : file_data,
                     'mimetype' : file_mimetype,
                 }
+
+            # If this is a list, iterate through all the items and check if it's
+            # a dict.  If it's a dict, run this routine on that dict.
+            elif isinstance(v, list):
+
+                for i in range(0, len(v)):
+                    if isinstance(v[i], dict):
+                        v[i] = self.fix_value_datatypes(v[i])
+
+            # If it's a dict, run this routine on that dict.
+            elif isinstance(v, dict):
+                data[k] = self.fix_value_datatypes(data[k])
 
         return data
 
