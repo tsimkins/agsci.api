@@ -3,7 +3,7 @@
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:plone="http://namespaces.plone.org/plone"
     xmlns:five="http://namespaces.zope.org/five"
-    i18n_domain="agsci.common">
+    i18n_domain="agsci.api">
 
     <!-- Basic View -->
 
@@ -12,7 +12,7 @@
         name="api"
         class=".BaseView"
         permission="zope2.View"
-        layer="agsci.common.browser.interfaces.IThemeSpecific"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
     <!-- Plone Site Root -->
@@ -22,7 +22,7 @@
         name="api"
         class=".plone_types.PloneSiteView"
         permission="zope2.View"
-        layer="agsci.common.browser.interfaces.IThemeSpecific"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
     <!-- Dexterity Image -->
@@ -32,7 +32,7 @@
         name="api"
         class=".plone_types.image.ImageView"
         permission="zope2.View"
-        layer="agsci.common.browser.interfaces.IThemeSpecific"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
     <!-- Dexterity File -->
@@ -42,7 +42,7 @@
         name="api"
         class=".plone_types.file.FileView"
         permission="zope2.View"
-        layer="agsci.common.browser.interfaces.IThemeSpecific"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
 </configure>

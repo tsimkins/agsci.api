@@ -17,7 +17,7 @@ import re
 import urllib2
 import urlparse
 
-from agsci.common.utilities import toISO, encode_blob
+from agsci.atlas.utilities import toISO, encode_blob
 
 # Custom Atlas Schemas
 from agsci.atlas.content import atlas_schemas

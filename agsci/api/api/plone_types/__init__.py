@@ -1,5 +1,5 @@
 from .. import BaseView
-from agsci.common.utilities import toISO
+from agsci.atlas.utilities import toISO
 from Products.CMFCore.utils import getToolByName
 
 class PloneSiteView(BaseView):
