@@ -616,7 +616,14 @@ class BaseView(BrowserView):
             # not cause problems. However, if it does, we can revert to the
             # original behavior, or do so selectively.
 
-            v = self.context.__dict__.get(i, None)
+            # Update 2016-10-27: Added the getattr() as a fallback, because it
+            # appears that Dexterity fields left as a default aren't returned.
+            # This doesn't seem to have a significant performance impact, and
+            # it returns the "right" value.
+
+            v = self.context.__dict__.get(i,
+                    getattr(self.context, i, None)
+                )
 
             # If it's a text field
             if hasattr(v, 'raw'):
