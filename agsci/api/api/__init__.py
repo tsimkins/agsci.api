@@ -257,10 +257,23 @@ class BaseView(BrowserView):
             'atlas_category_level_1',
             'atlas_category_level_2',
             'atlas_category_level_3',
+            'category_level_1',
+            'category_level_2',
+            'category_level_3',
             'atlas_curriculum',
             'atlas_program_team',
             'atlas_state_extension_team',
+            'content_error_codes',
+            'content_issues',
         ]
+
+        if not self.isProduct():
+            exclude_fields.extend([
+                    'program_team',
+                    'state_extension_team',
+                    'curriculum',
+                ]
+            )
 
         for i in exclude_fields:
             _i = self.format_key(i)
@@ -665,7 +678,7 @@ class BaseView(BrowserView):
                 continue
             else:
                 # Pull the 'getData()' values, and update the API data
-                ad = adapted.getData()
+                ad = adapted.getData(bin=self.showBinaryData)
                 data.update(ad)
 
         return data
