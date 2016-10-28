@@ -7,6 +7,8 @@ from plone.namedfile.file import NamedBlobFile
 from agsci.leadimage.content.behaviors import LeadImage
 from decimal import Decimal
 from datetime import datetime
+from zope.component import getAdapter
+from zope.component.interfaces import ComponentLookupError
 from zope.interface import implements
 from zope.publisher.interfaces import IPublishTraverse
 
@@ -20,7 +22,7 @@ import urlparse
 from agsci.atlas.utilities import toISO, encode_blob
 
 # Custom Atlas Schemas
-from agsci.atlas.content import atlas_schemas
+from agsci.atlas.content import atlas_schemas, atlas_adapters
 from agsci.atlas.content.behaviors import IAtlasMetadata
 from agsci.atlas.content.event.cvent import ICventEvent
 from agsci.atlas.content.publication import IPublication
@@ -444,9 +446,13 @@ class BaseView(BrowserView):
         # Pull data from catalog
         data = self.getCatalogData()
 
+        # Schema data
         sd = self.getSchemaData()
-
         data.update(sd)
+
+        # Adapter data
+        adapter_data = self.getAdapterData()
+        data.update(adapter_data)
 
         if self.isProduct():
 
@@ -641,6 +647,29 @@ class BaseView(BrowserView):
         data = self.fixData(data)
 
         return data
+
+    def getAdapterData(self):
+
+        data = {}
+
+        # Iterate through the 'atlas_adapters' list (set in agsci.atlas.content)
+        # and for those that adapt this context, include the output of 'getData'
+        #
+        # This is a little cleaner than doing stuff in the @@api subclassed views
+        for adapter in atlas_adapters:
+            try:
+                # See if this adapter can adapt the current context
+                adapted = getAdapter(self.context, interface=adapter)
+            except ComponentLookupError:
+                # If not, skip
+                continue
+            else:
+                # Pull the 'getData()' values, and update the API data
+                ad = adapted.getData()
+                data.update(ad)
+
+        return data
+
 
 class BaseContainerView(BaseView):
 
