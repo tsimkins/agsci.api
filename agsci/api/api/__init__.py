@@ -679,7 +679,10 @@ class BaseView(BrowserView):
             else:
                 # Pull the 'getData()' values, and update the API data
                 ad = adapted.getData(bin=self.showBinaryData)
-                data.update(ad)
+                
+                # Verify that we got a dict back, and update
+                if isinstance(ad, dict):
+                    data.update(ad)
 
         return data
 
