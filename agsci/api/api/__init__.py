@@ -19,7 +19,7 @@ import re
 import urllib2
 import urlparse
 
-from agsci.atlas.utilities import toISO, encode_blob
+from agsci.atlas.utilities import toISO, encode_blob, getAllSchemas
 
 # Custom Atlas Schemas
 from agsci.atlas.content import atlas_schemas
@@ -613,12 +613,21 @@ class BaseView(BrowserView):
 
     HEAD.__roles__ = ('Anonymous',)
 
-    def getSchemaData(self, schemas=[], fields=[]):
+    def getSchemaData(self, **kwargs):
+        # Data to return
         data = {}
 
-        # Use the Atlas products schema if a schema is not passed in
+        # Data fields and schemas to look at. For some reason, using named
+        # parameters (e.g. "fields=[]") resulted in values being provided
+        # without having them being passed in.
+        fields = kwargs.get('fields', [])
+        schemas = kwargs.get('schemas', [])
+
+        # Use the Atlas products schema if a schema is not passed in. Use
+        # inherited schemas as well.
         if not schemas:
-            schemas.extend(atlas_schemas)
+            for s in atlas_schemas:
+                schemas.extend(getAllSchemas(s))
 
         # Attach all custom fields from schema
         for i in schemas:
