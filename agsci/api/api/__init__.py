@@ -7,7 +7,7 @@ from plone.namedfile.file import NamedBlobFile
 from agsci.leadimage.content.behaviors import LeadImage
 from decimal import Decimal
 from datetime import datetime
-from zope.component import getAdapter
+from zope.component import getAdapters
 from zope.component.interfaces import ComponentLookupError
 from zope.interface import implements
 from zope.publisher.interfaces import IPublishTraverse
@@ -22,10 +22,12 @@ import urlparse
 from agsci.atlas.utilities import toISO, encode_blob
 
 # Custom Atlas Schemas
-from agsci.atlas.content import atlas_schemas, atlas_adapters
+from agsci.atlas.content import atlas_schemas
 from agsci.atlas.content.behaviors import IAtlasMetadata
 from agsci.atlas.content.event.cvent import ICventEvent
 from agsci.atlas.content.publication import IPublication
+
+from ..interfaces import IAPIDataAdapter
 
 # Prevent debug messages in log
 dicttoxml.set_debug(False)
@@ -665,21 +667,19 @@ class BaseView(BrowserView):
 
         data = {}
 
-        # Iterate through the 'atlas_adapters' list (set in agsci.atlas.content)
-        # and for those that adapt this context, include the output of 'getData'
+        # Iterate through all of the adapters that provided `IAPIDataAdapter`
+        # and include the output of 'getData' in the API output.
         #
         # This is a little cleaner than doing stuff in the @@api subclassed views
-        for adapter in atlas_adapters:
+
+        for (name, adapted) in getAdapters((self.context,), IAPIDataAdapter):
             try:
-                # See if this adapter can adapt the current context
-                adapted = getAdapter(self.context, interface=adapter)
-            except ComponentLookupError:
-                # If not, skip
-                continue
-            else:
                 # Pull the 'getData()' values, and update the API data
                 ad = adapted.getData(bin=self.showBinaryData)
-                
+            except AttributeError:
+                # If there's no 'getData()' method, skip
+                pass
+            else:
                 # Verify that we got a dict back, and update
                 if isinstance(ad, dict):
                     data.update(ad)
