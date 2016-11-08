@@ -267,6 +267,7 @@ class BaseView(BrowserView):
             'atlas_state_extension_team',
             'content_error_codes',
             'content_issues',
+            'registration_fieldsets',
         ]
 
         if not self.isProduct():
