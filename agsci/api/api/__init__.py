@@ -337,6 +337,7 @@ class BaseView(BrowserView):
             ('capacity', 'event_capacity'),
             ('walkin', 'event_walkin'),
             ('cancellation_deadline', 'cancelation_deadline'),  # Misspelled per http://grammarist.com/spelling/cancel/
+            ('store_view_id', 'website_ids'),
         ]
 
         # Make dict out of key/value tuples
