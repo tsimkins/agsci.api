@@ -457,6 +457,40 @@ class BaseView(BrowserView):
 
         return c
 
+    # Given a Plone product type, return the expected Magento product type
+    def mapProductType(self, data):
+
+        # Return dict with which to update data
+        _data = {}
+
+        # Hardcoded mapping of Plone product type to Magento product type
+        mapping = {
+            'Person' : 'Educators',
+            'Publication' : 'Guides and Publications',
+            'Article' : 'Articles',
+            'Learn Now Video' : 'Videos',
+            'Workshop' : 'Workshops',
+            'Webinar' : 'Webinars',
+        }
+
+        # Get the `product_type` value from the input data
+        product_type = data.get('product_type', None)
+
+        # If the `product_type` value exists, and is not null
+        if product_type:
+
+            # Add that as the `plone_product_type` value
+            _data['plone_product_type'] = product_type
+
+            # Get a new product type from the mapping
+            new_product_type = mapping.get(product_type, None)
+
+            # If we're mapping the product type, override that
+            if new_product_type:
+                _data['product_type'] = new_product_type
+
+        return _data
+
     def getData(self):
 
         # Pull data from catalog
@@ -486,6 +520,9 @@ class BaseView(BrowserView):
 
             # Magento Status-es
             data['visibility'] = 'Catalog, Search'
+
+            # Map product type to what Magento expects
+            data.update(self.mapProductType(data))
 
             # Populate Category Level 1/2/3
             category_level_keys = ['category_level%d' % x for x in range(1,4)]
