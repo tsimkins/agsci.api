@@ -464,14 +464,25 @@ class BaseView(BrowserView):
         # Return dict with which to update data
         _data = {}
 
+        # Hardcoded attribute set mapping
+        attribute_set_mapping = {
+            'App' : 'APPs',
+            'News Item' : 'News',
+            'Smart Sheet' : 'Smart Sheets',
+            'Learn Now Video' : 'Video Free',
+            #'Workshop' : 'Workshop Complex',
+            'Workshop' : 'Workshop Simple',
+        }
+
         # Hardcoded mapping of Plone product type to Magento product type
-        mapping = {
+        product_type_mapping = {
             'Person' : 'Educators',
             'Publication' : 'Guides and Publications',
             'Article' : 'Articles',
             'Learn Now Video' : 'Videos',
             'Workshop' : 'Workshops',
             'Webinar' : 'Webinars',
+            'News Item' : 'News',
         }
 
         # Get the `product_type` value from the input data
@@ -480,11 +491,15 @@ class BaseView(BrowserView):
         # If the `product_type` value exists, and is not null
         if product_type:
 
+            # Attribute Set
+            attribute_set = attribute_set_mapping.get(product_type, product_type)
+            _data['attribute_set'] = attribute_set
+
             # Add that as the `plone_product_type` value
             _data['plone_product_type'] = product_type
 
             # Get a new product type from the mapping
-            new_product_type = mapping.get(product_type, None)
+            new_product_type = product_type_mapping.get(product_type, None)
 
             # If we're mapping the product type, override that
             if new_product_type:
