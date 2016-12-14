@@ -6,7 +6,7 @@ class PloneSiteView(BaseView):
 
     # Listing of interfaces that products provide
     product_interfaces = ['agsci.atlas.content.behaviors.IAtlasMetadata',]
-    
+
     # Exclude these Types of objects from output.  Specifically, Person objects
     # will be handled separately (in the directory)
     exclude_types = ['Person', ]
@@ -39,16 +39,17 @@ class PloneSiteView(BaseView):
             # Store 'modified' query string in response data
             data['modified'] = repr(modified)
 
-            # Construct catalog query based on product types 
+            # Construct catalog query based on product types
             query = {
                         'object_provides' : self.product_interfaces,
                         'modified' : modified,
+                        'review_state' : ['published', 'expired'],
                     }
 
             # Query catalog
             results = self.portal_catalog.searchResults(query)
 
-            # Iterate through results, skipping Person objects, and append 
+            # Iterate through results, skipping Person objects, and append
             # API export data to "contents" structure
             for r in results:
 
