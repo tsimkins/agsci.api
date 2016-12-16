@@ -309,7 +309,7 @@ class BaseView(BrowserView):
             ('modified' , 'updated_at'),
             ('effective' , 'publish_date'),
             ('expires' , 'product_expiration'),
-            ('Type' , 'product_type'),
+            ('Type' , 'plone_product_type'),
             ('getId', 'short_name'),
             ('review_state', 'plone_status'),
             ('getRemoteUrl', 'remote_url'),
@@ -464,46 +464,118 @@ class BaseView(BrowserView):
         # Return dict with which to update data
         _data = {}
 
-        # Hardcoded attribute set mapping
+        # Mapping for attribute set in Magento
         attribute_set_mapping = {
             'App' : 'APPs',
-            'News Item' : 'News',
-            'Smart Sheet' : 'Smart Sheets',
+            'Article' : 'Article',
+            'Conference' : 'Workshop Complex',
+            'Conference Group' : 'Workshop Complex',
+            'Curriculum' : 'Curriculum',
             'Learn Now Video' : 'Video Free',
-            #'Workshop' : 'Workshop Complex',
+            'News Item' : 'News',
+            'Online Course' : 'Online Course',
+            'Online Course Group' : 'Online Course',
+            'Person' : 'Person',
+            'Publication' : 'Publication',
+            'Smart Sheet' : 'Smart Sheets',
+            'Webinar' : 'Webinar',
+            'Webinar Group' : 'Webinar',
             'Workshop' : 'Workshop Simple',
+            'Workshop Group' : 'Workshop Complex'
         }
 
-        # Hardcoded mapping of Plone product type to Magento product type
-        product_type_mapping = {
+        # Education format mapping (for filter in Magento)
+        education_format_mapping = {
+            'App' : 'Downloadable',
+            'Article' : 'Articles',
+            'Conference' : 'Conferences',
+            'Conference Group' : 'Conferences',
+            'Curriculum' : 'Curriculum',
+            'Learn Now Video' : 'Videos',
+            'News Item' : 'News',
+            'Online Course' : 'Online Course',
+            'Online Course Group' : 'Online Course',
             'Person' : 'Educators',
             'Publication' : 'Guides and Publications',
-            'Article' : 'Articles',
-            'Learn Now Video' : 'Videos',
-            'Workshop' : 'Workshops',
+            'Smart Sheet' : 'Downloadable',
             'Webinar' : 'Webinars',
+            'Webinar Group' : 'Webinars',
+            'Workshop' : 'Workshops',
+            'Workshop Group' : 'Workshops'
+        }
+
+        # Mapping of Plone product type to integration produc type
+        product_type_mapping = {
+            'App' : 'App',
+            'Article' : 'Article',
+            'Conference' : 'Conference',
+            'Conference Group' : 'Conference Group',
+            'Curriculum' : 'Curriculum',
+            'Cvent Event' : 'Cvent Event',
+            'Learn Now Video' : 'Video',
             'News Item' : 'News',
+            'Online Course' : 'Online Course',
+            'Online Course Group' : 'Online Course Group',
+            'Person' : 'Person',
+            'Publication' : 'Publication',
+            'Smart Sheet' : 'Smart Sheet',
+            'Webinar' : 'Webinar',
+            'Webinar Group' : 'Webinar Group',
+            'Workshop' : 'Workshop',
+            'Workshop Group' : 'Workshop Group'
+        }
+
+        # One-off for Cvent events.  Event Type (manually set) to
+        # `attribute_set` and `education_format`
+        cvent_event_type_mapping = {
+            'Workshop' : {
+                'attribute_set' : 'Workshop Complex',
+                'education_format' : 'Workshops',
+            },
+            'Webinar' : {
+                'attribute_set' : 'Webinar',
+                'education_format' : 'Webinars',
+            },
+            'Conference' : {
+                'attribute_set' : 'Workshop Complex',
+                'education_format' : 'Conferences',
+            },
         }
 
         # Get the `product_type` value from the input data
-        product_type = data.get('product_type', None)
+        plone_product_type = data.get('plone_product_type', None)
 
         # If the `product_type` value exists, and is not null
-        if product_type:
+        if plone_product_type:
 
             # Attribute Set
-            attribute_set = attribute_set_mapping.get(product_type, product_type)
-            _data['attribute_set'] = attribute_set
+            _data['attribute_set'] = attribute_set_mapping.get(plone_product_type, None)
 
-            # Add that as the `plone_product_type` value
-            _data['plone_product_type'] = product_type
+            # Education Format (Filter)
+            _data['education_format'] = education_format_mapping.get(plone_product_type, None)
 
-            # Get a new product type from the mapping
-            new_product_type = product_type_mapping.get(product_type, None)
+            # Product Type (Integration)
+            _data['product_type'] = product_type_mapping.get(plone_product_type, None)
 
-            # If we're mapping the product type, override that
-            if new_product_type:
-                _data['product_type'] = new_product_type
+            # Set `product_platform` default
+            data['product_platform'] = 'Plone'
+
+            # Calculate/update fields if we're a Cvent event
+            if ICventEvent.providedBy(self.context):
+
+                # Set `product_platform`
+                data['product_platform'] = 'Cvent'
+
+                # Calculate `attribute_set` and `education_format`
+                # based on the Event Type attribute of the Cvent event
+                event_type = getattr(self.context, 'atlas_event_type', 'Workshop')
+
+                # Update data fields
+                _data.update(cvent_event_type_mapping.get(event_type, {}))
+
+            # Set `product_platform` if we're a Publication
+            elif IPublication.providedBy(self.context):
+                data['product_platform'] = 'Salesforce'
 
         return _data
 
@@ -521,18 +593,6 @@ class BaseView(BrowserView):
         data.update(adapter_data)
 
         if self.isProduct():
-
-            # Set `product_platform` default
-            data['product_platform'] = 'Plone'
-
-            # Set `product_platform` and `product_type` if we're a Cvent event
-            if ICventEvent.providedBy(self.context):
-                data['product_platform'] = 'Cvent'
-                data['product_type'] = getattr(self.context, 'atlas_event_type', 'Workshop')
-
-            # Set `product_platform` if we're a Publication
-            elif IPublication.providedBy(self.context):
-                data['product_platform'] = 'Salesforce'
 
             # Magento Status-es
             data['visibility'] = 'Catalog, Search'
