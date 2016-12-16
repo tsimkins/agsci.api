@@ -555,7 +555,8 @@ class BaseView(BrowserView):
             _data['education_format'] = education_format_mapping.get(plone_product_type, None)
 
             # Product Type (Integration)
-            _data['product_type'] = product_type_mapping.get(plone_product_type, None)
+            # Note that, unlike the other mappings, this one defaults to `plone_product_type`
+            _data['product_type'] = product_type_mapping.get(plone_product_type, plone_product_type)
 
             # Set `product_platform` default
             data['product_platform'] = 'Plone'
@@ -683,6 +684,10 @@ class BaseView(BrowserView):
                         del data[i]
 
         else:
+            # If we're not a Product, copy the value for `plone_product_type`
+            # into `product_type` for the integration.
+            data['product_type'] = data['plone_product_type']
+
             # Remove all the product fields for non-products
             for k in ('publish_date', 'product_expiration', 'updated_at',
                       'plone_status', 'language', 'authors', 'owners'):
