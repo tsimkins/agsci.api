@@ -22,7 +22,7 @@ import urlparse
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemas
 
 # Custom Atlas Schemas
-from agsci.atlas.content import atlas_schemas
+from agsci.atlas.content import atlas_schemas, DELIMITER
 from agsci.atlas.content.behaviors import IAtlasMetadata
 from agsci.atlas.content.event.cvent import ICventEvent
 from agsci.atlas.content.publication import IPublication
@@ -610,7 +610,7 @@ class BaseView(BrowserView):
                 j = data.get(i, [])
 
                 for k in j:
-                    categories.append(tuple(k.split(':')))
+                    categories.append(tuple(k.split(DELIMITER)))
 
                 if j:
                     del data[i]
@@ -626,7 +626,7 @@ class BaseView(BrowserView):
                 j = data.get(i, [])
 
                 for k in j:
-                    extension_structure.append(tuple(k.split(':')))
+                    extension_structure.append(tuple(k.split(DELIMITER)))
 
                 if j:
                     del data[i]
