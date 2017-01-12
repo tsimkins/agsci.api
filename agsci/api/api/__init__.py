@@ -595,8 +595,9 @@ class BaseView(BrowserView):
 
         if self.isProduct():
 
-            # Magento Status-es
-            data['visibility'] = 'Catalog, Search'
+            # Magento Visibility.  Provide default if not already set.
+            if not data.has_key('visibility'):
+                data['visibility'] = 'Catalog, Search'
 
             # Map product type to what Magento expects
             data.update(self.mapProductType(data))
