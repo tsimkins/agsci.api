@@ -5,7 +5,12 @@ from Products.CMFCore.utils import getToolByName
 class PloneSiteView(BaseView):
 
     # Listing of interfaces that products provide
-    product_interfaces = ['agsci.atlas.content.IAtlasProduct',]
+    product_interfaces = [
+                            'agsci.atlas.content.IAtlasProduct',
+                            'agsci.atlas.content.behaviors.IAtlasInternalMetadata',
+                            'agsci.atlas.content.behaviors.IAtlasProductCategoryMetadata',
+                            'agsci.atlas.content.behaviors.IAtlasProductAttributeMetadata',
+                        ]
 
     # Exclude these Types of objects from output.  Specifically, Person objects
     # will be handled separately (in the directory)

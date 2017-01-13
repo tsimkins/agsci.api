@@ -22,8 +22,9 @@ import urlparse
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemas
 
 # Custom Atlas Schemas
-from agsci.atlas.content import atlas_schemas, DELIMITER
-from agsci.atlas.content.behaviors import IAtlasMetadata
+from agsci.atlas.content import atlas_schemas, DELIMITER, IAtlasProduct
+from agsci.atlas.content.behaviors import IAtlasInternalMetadata, \
+     IAtlasProductCategoryMetadata, IAtlasProductAttributeMetadata
 from agsci.atlas.content.event.cvent import ICventEvent
 from agsci.atlas.content.publication import IPublication
 
@@ -418,7 +419,15 @@ class BaseView(BrowserView):
     # Determine if we have a product, based on if we have the metadata
     # assigned to it.
     def isProduct(self):
-        return IAtlasMetadata.providedBy(self.context)
+
+        for _interface in [ IAtlasProduct, IAtlasInternalMetadata,
+                            IAtlasProductCategoryMetadata,
+                            IAtlasProductAttributeMetadata]:
+
+            if _interface.providedBy(self.context):
+                return True
+
+        return False
 
     # Takes a list of variable-length tuples, and condenses that into the
     # minimum set necessary to prevent duplication.  For example:
