@@ -756,8 +756,20 @@ class BaseView(BrowserView):
         # Use the Atlas products schema if a schema is not passed in. Use
         # inherited schemas as well.
         if not schemas:
+
+            # Note: This code is duplicated in
+            # agsci.atlas.browser.viewlets.AtlasDataDump.data
+
+            # Append any 'additional_schemas' noted by the object
+            schemas.extend(getattr(self.context, 'additional_schemas', []))
+
             for s in atlas_schemas:
                 schemas.extend(getAllSchemas(s))
+
+            # Remove any exclude_schemas from the object
+            for exclude_schema in getattr(self.context, 'exclude_schemas', []):
+                if exclude_schema in schemas:
+                    schemas.remove(exclude_schema)
 
         # Attach all custom fields from schema
         for i in schemas:
