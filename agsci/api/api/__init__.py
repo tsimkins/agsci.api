@@ -766,11 +766,6 @@ class BaseView(BrowserView):
             for s in atlas_schemas:
                 schemas.extend(getAllSchemas(s))
 
-            # Remove any exclude_schemas from the object
-            for exclude_schema in getattr(self.context, 'exclude_schemas', []):
-                if exclude_schema in schemas:
-                    schemas.remove(exclude_schema)
-
         # Attach all custom fields from schema
         for i in schemas:
             if i.providedBy(self.context):
