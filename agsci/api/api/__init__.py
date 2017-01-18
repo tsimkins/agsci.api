@@ -269,6 +269,7 @@ class BaseView(BrowserView):
             'content_issues',
             'registration_fieldsets',
             'IsChildProduct',
+            'leadimage_show',
         ]
 
         if not self.isProduct():
