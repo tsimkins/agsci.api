@@ -8,7 +8,6 @@ from agsci.leadimage.content.behaviors import LeadImage
 from decimal import Decimal
 from datetime import datetime
 from zope.component import getAdapters
-from zope.component.interfaces import ComponentLookupError
 from zope.interface import implements
 from zope.publisher.interfaces import IPublishTraverse
 
@@ -19,7 +18,7 @@ import re
 import urllib2
 import urlparse
 
-from agsci.atlas.utilities import toISO, encode_blob, getAllSchemas
+from agsci.atlas.utilities import toISO, encode_blob, getAllSchemas, getBaseSchema
 
 # Custom Atlas Schemas
 from agsci.atlas.content import atlas_schemas, DELIMITER, IAtlasProduct
@@ -652,7 +651,7 @@ class BaseView(BrowserView):
 
             # Object URL
             url = self.context.absolute_url()
-            data['external_url'] = url
+
             data['api_url_xml'] = '%s/@@api' % url
             data['api_url_json'] = '%s/@@api/json' % url
 
@@ -757,17 +756,19 @@ class BaseView(BrowserView):
         # inherited schemas as well.
         if not schemas:
 
-            # Note: This code is duplicated in
-            # agsci.atlas.browser.viewlets.AtlasDataDump.data
+            # Base schema
+            schemas.extend(
+                getAllSchemas(
+                    getBaseSchema(self.context)
+                )
+            )
 
-            # Append any 'additional_schemas' noted by the object
-            schemas.extend(getattr(self.context, 'additional_schemas', []))
-
+            # Atlas schemas
             for s in atlas_schemas:
                 schemas.extend(getAllSchemas(s))
 
         # Attach all custom fields from schema
-        for i in schemas:
+        for i in set(schemas):
             if i.providedBy(self.context):
                 fields.extend(i.names())
 
