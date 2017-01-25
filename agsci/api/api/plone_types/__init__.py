@@ -10,11 +10,9 @@ class PloneSiteView(BaseView):
                             'agsci.atlas.content.behaviors.IAtlasInternalMetadata',
                             'agsci.atlas.content.behaviors.IAtlasProductCategoryMetadata',
                             'agsci.atlas.content.behaviors.IAtlasProductAttributeMetadata',
+                            'agsci.atlas.content.ICounty',
+                            'agsci.person.content.person.IPerson',
                         ]
-
-    # Exclude these Types of objects from output.  Specifically, Person objects
-    # will be handled separately (in the directory)
-    exclude_types = ['Person', ]
 
     def getData(self):
 
@@ -57,10 +55,6 @@ class PloneSiteView(BaseView):
             # Iterate through results, skipping Person objects, and append
             # API export data to "contents" structure
             for r in results:
-
-                # Exclude objects of a specified Type
-                if r.Type in self.exclude_types:
-                    continue
 
                 o = r.getObject()
 
