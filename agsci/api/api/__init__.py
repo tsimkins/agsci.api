@@ -652,7 +652,7 @@ class BaseView(BrowserView):
 
             # Object URL
             url = self.context.absolute_url()
-
+            data['plone_url'] = url
             data['api_url_xml'] = '%s/@@api' % url
             data['api_url_json'] = '%s/@@api/json' % url
 
