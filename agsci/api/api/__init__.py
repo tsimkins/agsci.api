@@ -18,6 +18,7 @@ import re
 import urllib2
 import urlparse
 
+from agsci.atlas.content.behaviors import IShadowProduct
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemas, getBaseSchema
 
 # Custom Atlas Schemas
@@ -834,6 +835,26 @@ class BaseView(BrowserView):
 
         return data
 
+    # Get data for Shadow Products
+    def getShadowData(self):
+
+        data = []
+
+        if IShadowProduct.providedBy(self.context):
+
+            for (name, adapted) in getAdapters((self.context,), IShadowProduct):
+                try:
+                    # Pull the 'getData()' values, and update the API data
+                    ad = adapted.getData(bin=self.showBinaryData)
+                except AttributeError:
+                    # If there's no 'getData()' method, skip
+                    pass
+                else:
+                    # Verify that we got a dict back, and update
+                    if isinstance(ad, dict):
+                        data.append(ad)
+
+        return data
 
 class BaseContainerView(BaseView):
 
