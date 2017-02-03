@@ -7,6 +7,7 @@ from plone.namedfile.file import NamedBlobFile
 from agsci.leadimage.content.behaviors import LeadImage
 from decimal import Decimal
 from datetime import datetime
+from plone.autoform.interfaces import IFormFieldProvider
 from zope.component import getAdapters
 from zope.interface import implements
 from zope.publisher.interfaces import IPublishTraverse
@@ -19,7 +20,7 @@ import urllib2
 import urlparse
 
 from agsci.atlas.content.behaviors import IShadowProduct
-from agsci.atlas.utilities import toISO, encode_blob, getAllSchemas, getBaseSchema
+from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, getBaseSchema
 
 # Custom Atlas Schemas
 from agsci.atlas.content import atlas_schemas, DELIMITER, IAtlasProduct
@@ -759,20 +760,20 @@ class BaseView(BrowserView):
         if not schemas:
 
             # Base schema
-            schemas.extend(
-                getAllSchemas(
-                    getBaseSchema(self.context)
-                )
+            schemas.append(
+                getBaseSchema(self.context)
             )
 
             # Atlas schemas
-            for s in atlas_schemas:
-                schemas.extend(getAllSchemas(s))
+            schemas.extend(atlas_schemas)
 
         # Attach all custom fields from schema
         for i in set(schemas):
-            if i.providedBy(self.context):
-                fields.extend(i.names())
+
+            # Only include schemas that provide form fields.
+            if IFormFieldProvider.providedBy(i):
+                if i.providedBy(self.context):
+                    fields.extend(getAllSchemaFields(i))
 
         for i in set(fields):
 
