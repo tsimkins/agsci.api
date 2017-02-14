@@ -10,6 +10,7 @@ class PloneSiteView(BaseView):
                             'agsci.atlas.content.behaviors.IAtlasInternalMetadata',
                             'agsci.atlas.content.behaviors.IAtlasProductCategoryMetadata',
                             'agsci.atlas.content.behaviors.IAtlasProductAttributeMetadata',
+                            'agsci.atlas.content.behaviors.IAtlasEPASMetadata',
                             'agsci.atlas.content.ICounty',
                             'agsci.person.content.person.IPerson',
                         ]
