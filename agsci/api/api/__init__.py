@@ -31,6 +31,12 @@ from agsci.atlas.content.publication import IPublication
 
 from ..interfaces import IAPIDataAdapter
 
+# Explicit delete value
+class DeleteValue(object):
+    pass
+
+DELETE_VALUE = DeleteValue()
+
 # Prevent debug messages in log
 dicttoxml.set_debug(False)
 
@@ -730,6 +736,17 @@ class BaseView(BrowserView):
         if hasattr(self.context, 'text') and hasattr(self.context.text, 'raw'):
             data['description'] = self.context.text.raw
 
+        # Delete explicitly delete
+        data = self.clearDeletedValues(data)
+
+        return data
+
+    def clearDeletedValues(self, data):
+        # Delete explicitly delete
+        for _k in data.keys():
+            if isinstance(data[_k], DeleteValue):
+                del data[_k]
+
         return data
 
     def getJSON(self):
@@ -853,7 +870,7 @@ class BaseView(BrowserView):
                 if isinstance(ad, dict):
                     data.update(ad)
 
-        return data
+        return self.fixData(data)
 
     # Get data for Shadow Products
     def getShadowData(self):
