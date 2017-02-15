@@ -19,7 +19,7 @@ import re
 import urllib2
 import urlparse
 
-from agsci.atlas.content.behaviors import IShadowProduct
+from agsci.atlas.content.behaviors import IShadowProduct, ISubProduct
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, getBaseSchema
 
 # Custom Atlas Schemas
@@ -342,6 +342,7 @@ class BaseView(BrowserView):
             ('walkin', 'event_walkin'),
             ('cancellation_deadline', 'cancelation_deadline'),  # Misspelled per http://grammarist.com/spelling/cancel/
             ('store_view_id', 'website_ids'),
+            ('pdf_file', 'pdf'),
         ]
 
         # Make dict out of key/value tuples
@@ -488,7 +489,10 @@ class BaseView(BrowserView):
             'Online Course' : 'Online Course',
             'Online Course Group' : 'Online Course',
             'Person' : 'Person',
-            'Publication' : 'Publication',
+            'Publication Group' : 'Publication',
+            'Publication Print' : 'Publication',
+            'Publication Digital' : 'Publication',
+            'Publication Bundle' : 'Publication',
             'Smart Sheet' : 'Smart Sheets',
             'Webinar' : 'Webinar',
             'Webinar Group' : 'Webinar',
@@ -508,7 +512,10 @@ class BaseView(BrowserView):
             'Online Course' : 'Online Courses',
             'Online Course Group' : 'Online Courses',
             'Person' : 'Educators',
-            'Publication' : 'Guides and Publications',
+            'Publication Group' : 'Guides and Publications',
+            'Publication Print' : 'Guides and Publications',
+            'Publication Digital' : 'Guides and Publications',
+            'Publication Bundle' : 'Guides and Publications',
             'Smart Sheet' : 'Downloadable',
             'Webinar' : 'Webinars',
             'Webinar Group' : 'Webinars',
@@ -529,7 +536,10 @@ class BaseView(BrowserView):
             'Online Course' : 'Online Course',
             'Online Course Group' : 'Online Course Group',
             'Person' : 'Person',
-            'Publication' : 'Publication',
+            'Publication Group' : 'Publication Group',
+            'Publication Print' : 'Publication Print',
+            'Publication Digital' : 'Publication Digital',
+            'Publication Bundle' : 'Publication Bundle',
             'Smart Sheet' : 'Smart Sheet',
             'Webinar' : 'Webinar',
             'Webinar Group' : 'Webinar Group',
@@ -592,7 +602,7 @@ class BaseView(BrowserView):
 
         return _data
 
-    def getData(self):
+    def getData(self, subproduct=True):
 
         # Pull data from catalog
         data = self.getCatalogData()
@@ -692,9 +702,18 @@ class BaseView(BrowserView):
 
             # If we DO NOT show binary data
             else:
-                for i in ['file', 'image', 'leadimage']:
+                for i in ['file', 'image', 'leadimage', 'pdf']:
                     if data.has_key(i):
                         del data[i]
+
+            # Include subproduct data (default yes, but getSubProductData() calls
+            # getData() with a subproduct=False to prevent infinite recursion.
+            if subproduct:
+
+                if not data.has_key("contents"):
+                    data['contents'] = []
+
+                data['contents'].extend(self.getSubProductData())
 
         else:
             # If we're not a Product, copy the value for `plone_product_type`
@@ -847,6 +866,27 @@ class BaseView(BrowserView):
                 try:
                     # Pull the 'getData()' values, and update the API data
                     ad = adapted.getData(bin=self.showBinaryData)
+                except AttributeError:
+                    # If there's no 'getData()' method, skip
+                    pass
+                else:
+                    # Verify that we got a dict back, and update
+                    if isinstance(ad, dict):
+                        data.append(ad)
+
+        return data
+
+    # Get data for Sub Products
+    def getSubProductData(self):
+
+        data = []
+
+        if ISubProduct.providedBy(self.context):
+
+            for (name, adapted) in getAdapters((self.context,), ISubProduct):
+                try:
+                    # Pull the 'getData()' values, and update the API data
+                    ad = adapted.getData(bin=self.showBinaryData, subproduct=False)
                 except AttributeError:
                     # If there's no 'getData()' method, skip
                     pass
