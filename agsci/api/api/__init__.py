@@ -909,7 +909,7 @@ class BaseView(BrowserView):
                     pass
                 else:
                     # Verify that we got a dict back, and update
-                    if isinstance(ad, dict):
+                    if isinstance(ad, dict) and ad:
                         data.append(ad)
 
         return data
