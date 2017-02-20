@@ -51,6 +51,8 @@ class BaseView(BrowserView):
     valid_data_formats = ['json', 'xml']
     default_data_format = 'xml'
 
+    show_all_fields = False
+
     # Default window for listing updated items
     default_updated = 3600
 
@@ -413,16 +415,19 @@ class BaseView(BrowserView):
 
     def remove_empty_nonrequired_fields(self, data):
 
-        # Listing of required fields
-        required_fields = ['Title', 'available_to_public']
+        # Bypass this if show_all_fields is True
+        if not self.show_all_fields:
 
-        # Normalize
-        required_fields = [self.format_key(x) for x in required_fields]
+            # Listing of required fields
+            required_fields = ['Title', 'available_to_public']
 
-        for k in data.keys():
-            if k not in required_fields:
-                if not data[k]:
-                    del data[k]
+            # Normalize
+            required_fields = [self.format_key(x) for x in required_fields]
+
+            for k in data.keys():
+                if k not in required_fields:
+                    if not data[k]:
+                        del data[k]
 
         return data
 
@@ -654,10 +659,10 @@ class BaseView(BrowserView):
             for i in extension_structure_keys:
                 j = data.get(i, [])
 
-                for k in j:
-                    extension_structure.append(tuple(k.split(DELIMITER)))
-
                 if j:
+                    for k in j:
+                        extension_structure.append(tuple(k.split(DELIMITER)))
+
                     del data[i]
 
             data['extension_structure'] = self.minimizeStructure(extension_structure, keys=extension_structure_keys)
