@@ -16,7 +16,7 @@
         />
 
     <!-- Container View -->
-    
+
     <browser:page
         for=" plone.dexterity.interfaces.IDexterityContainer"
         name="api"
@@ -31,6 +31,14 @@
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
         name="api"
         class=".plone_types.PloneSiteView"
+        permission="zope2.View"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
+        />
+
+    <browser:page
+        for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+        name="api-sample"
+        class=".plone_types.sample.SampleAPIView"
         permission="zope2.View"
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
