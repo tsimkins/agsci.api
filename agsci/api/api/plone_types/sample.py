@@ -1,6 +1,16 @@
-from . import PloneSiteView
-import itertools
+from zope.component.interfaces import ComponentLookupError
+from Products.CMFCore.utils import getToolByName
+from plone.dexterity.utils import createContent, iterSchemataForType
 from copy import copy
+from zope import schema
+from . import PloneSiteView
+from datetime import datetime
+import itertools
+from plone.app.textfield.value import RichTextValue
+from plone.namedfile.file import NamedBlobImage, NamedBlobFile
+from zope.interface.interface import Method
+from zope.component import getMultiAdapter
+from agsci.atlas.utilities import getAllSchemaFieldsAndDescriptions
 
 class SampleAPIView(PloneSiteView):
 
@@ -79,35 +89,103 @@ class SampleAPIView(PloneSiteView):
 
         return data
 
+    def getDefaultForFieldType(self, field):
+
+        # Field Class
+        field_klass = field.__class__.__name__
+
+        # Return nothing for methods
+        if field_klass in ['Method',]:
+            return None
+
+        # Define dummy fields
+
+        rich_text = RichTextValue(raw='<p>%s</p>' % self.placeholder,
+                                  mimeType=u'text/html',
+                                  outputMimeType='text/x-html-safe')
+
+        named_blob_file = NamedBlobFile(filename=u'sample.pdf',
+                                        contentType='application/pdf')
+
+        named_blob_file.data = self.placeholder.encode('utf-8')
+
+        named_blob_image = NamedBlobImage(filename=u'sample.png',
+                                        contentType='image/png')
+
+        named_blob_image.data = self.placeholder.encode('utf-8')
+
+        # Simple field defaults
+
+        defaults = {
+            'Int' : 10,
+            'Text' : "\n".join(3*[self.placeholder]),
+            'List' : 3*[self.placeholder],
+            'TextLine' : self.placeholder,
+            'Bool' : True,
+            'Datetime' : datetime.now(),
+            'RichText' : rich_text,
+            'NamedBlobFile' : named_blob_file,
+            'NamedBlobImage' : named_blob_image,
+            'Choice' : self.placeholder,
+        }
+
+        # If a default, return that.  Otherwise, return the placeholder.
+        return defaults.get(field_klass, self.placeholder)
+
+
+
     def getData(self):
+
+        # Not recursive, no binaries
+        self.request.form['recursive'] = '0'
+        self.request.form['bin'] = '0'
 
         # Data structure to return
         sample_data = {}
 
-        # Construct catalog query based on product types
-        query = {
-                    'object_provides' : self.product_interfaces,
-                }
+        # Get portal_types object
+        portal_types = getToolByName(self.context, "portal_types")
 
-        # Query catalog
-        results = self.portal_catalog.searchResults(query)
+        # Iterate through the portal types
+        for pt in portal_types.listTypeInfo():
 
-        # Iterate through results, skipping Person objects, and append
-        # API export data to "contents" structure
-        for r in results:
+            # Get the base schema
+            schema = getattr(pt, 'schema', None)
 
-            # Get object from brain
-            o = r.getObject()
+            # if we have a base schema, and it's an agsci.atlas content
+            if schema and any([schema.startswith(x) for x in ['agsci.atlas', 'agsci.person']]):
+                portal_type = pt.getId()
 
-            # Traverse to the API view
-            api_view = o.restrictedTraverse('@@api')
+                kwargs = {}
 
-            # Update sample data with API output
-            sample_data = self.updateValues(sample_data, api_view.getData())
+                for s in iterSchemataForType(portal_type):
 
-            # Update sample data with shadow API output
-            for i in api_view.getShadowData():
-                sample_data.update(i)
+                    for (name, field) in getAllSchemaFieldsAndDescriptions(s):
+                        if not isinstance(field, Method):
+                            kwargs[name] = self.getDefaultForFieldType(field)
+
+                # Create a dummy object with default values
+                o = createContent(portal_type, **kwargs)
+
+                # Set id
+                o.id = 'X_%s_X' % portal_type
+
+                # Run the API view against it
+                try:
+                    api_view = getMultiAdapter((o, self.request), name='api')
+
+                except ComponentLookupError:
+                    pass
+
+                else:
+
+                    if api_view.isProduct():
+                        # Update sample data with API output
+                        sample_data = self.updateValues(sample_data, api_view.getData())
+
+                        # Update sample data with shadow API output
+                        for i in api_view.getShadowData():
+                            sample_data.update(i)
 
         # Data structure to return
         data = {}
@@ -115,9 +193,12 @@ class SampleAPIView(PloneSiteView):
         # Replace strings with placeholders
         sample_data = self.replaceValues(sample_data)
 
+        # Add a dummy "contents" field
+        sample_data['contents'] = [self.placeholder]
+
 
         # Initialize contents structure
-        data["contents"] = [sample_data,]
+        data['contents'] = [sample_data,]
 
         # Store 'modified' query string in response data
         data['modified'] = self.placeholder
