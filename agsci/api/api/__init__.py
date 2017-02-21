@@ -732,10 +732,13 @@ class BaseView(BrowserView):
             # getData() with a subproduct=False to prevent infinite recursion.
             if subproduct:
 
-                if not data.has_key("contents"):
-                    data['contents'] = []
+                subproduct_data = self.getSubProductData()
 
-                data['contents'].extend(self.getSubProductData())
+                if subproduct_data:
+                    if not data.has_key("contents"):
+                        data['contents'] = []
+
+                    data['contents'].extend(subproduct_data)
 
         else:
             # If we're not a Product, copy the value for `plone_product_type`
