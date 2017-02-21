@@ -1,21 +1,11 @@
 from . import PloneSiteView
-from Products.CMFCore.utils import getToolByName
 import itertools
-import random
 from copy import copy
 
 class SampleAPIView(PloneSiteView):
 
     placeholder = u'...'
-    default_limit = 25
     show_all_fields = True
-
-    @property
-    def limit(self):
-        try:
-            return int(self.request.get('limit', self.default_limit))
-        except:
-            return self.default_limit
 
     def updateValues(self, data, new_data):
 
@@ -44,7 +34,7 @@ class SampleAPIView(PloneSiteView):
                     data[k] = self.updateValues(data[k], new_data[k])
 
                 # If they're both lists/tuples
-                elif isinstance(data[k], (list,tuple)) and isinstance(new_data[k], (list,tuple)):
+                elif isinstance(data[k], (list, tuple)) and isinstance(new_data[k], (list, tuple)):
                     data[k] = list(data[k]) + list(new_data[k])
 
         return data
@@ -90,7 +80,7 @@ class SampleAPIView(PloneSiteView):
         return data
 
     def getData(self):
-        print "Max Items: %d" % self.limit
+
         # Data structure to return
         sample_data = {}
 
@@ -102,37 +92,9 @@ class SampleAPIView(PloneSiteView):
         # Query catalog
         results = self.portal_catalog.searchResults(query)
 
-        # Randomize order
-        results = [x for x in results]
-        random.shuffle(results)
-
-        # Get count of various product types, and restrict the max to limit
-        # or the count (whichever is less)
-        results_types = [x.Type for x in results]
-
-        results_types_count = dict([(x, {'total' : results_types.count(x),
-                                         'limit' : results_types.count(x)})
-                                    for x in set(results_types)])
-
-        for k in results_types_count.keys():
-            if results_types_count[k].get('total') > self.limit:
-                results_types_count[k]['limit'] = self.limit
-
-        sample_counter = dict([(x,0) for x in results_types])
-
         # Iterate through results, skipping Person objects, and append
         # API export data to "contents" structure
         for r in results:
-
-            # Check for over limit for type.  Don't process if over limit.
-            limit = results_types_count[r.Type]['limit']
-            current = sample_counter[r.Type]
-
-            if current >= limit:
-                continue
-
-            # Increment limit
-            sample_counter[r.Type] = sample_counter[r.Type] + 1
 
             # Get object from brain
             o = r.getObject()
