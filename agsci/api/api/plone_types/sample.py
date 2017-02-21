@@ -1,5 +1,6 @@
 from . import PloneSiteView
 from Products.CMFCore.utils import getToolByName
+import itertools
 import random
 from copy import copy
 
@@ -57,13 +58,15 @@ class SampleAPIView(PloneSiteView):
         elif isinstance(data, (list, tuple)):
             data = [self.replaceValues(x) for x in data]
 
-            # If data is entirely str/unicode, only present three items
+            # If data is entirely str/unicode, only present one item
             if all([isinstance(x, (str, unicode)) for x in data]):
-                data = data[0:3]
+                data = data[0:1]
 
-            # If data is entirely list/tuple, only present three items
+            # If data is entirely list/tuple, combine contents into one list
             elif all([isinstance(x, (list, tuple)) for x in data]):
-                data = data[0:3]
+                data = [
+                    self.replaceValues(list(itertools.chain(*data)))
+                ]
 
             # If all children are dicts
             elif all([isinstance(x, dict) for x in data]):
