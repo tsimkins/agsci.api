@@ -189,7 +189,16 @@ class BaseView(BrowserView):
 
     def getIndexData(self):
         try:
-            return self.portal_catalog.getIndexDataForUID("/".join(self.context.getPhysicalPath()))
+            # Initialize all index values as blank
+            data = dict([(x, '') for x in self.portal_catalog.indexes()])
+
+            # Update with actual values
+            data.update(
+                self.portal_catalog.getIndexDataForUID("/".join(self.context.getPhysicalPath()))
+                )
+
+            # Return listing
+            return data
         except:
             return {} # Return an empty dict if there's an issue with the catalog
 
