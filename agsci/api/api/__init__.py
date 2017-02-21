@@ -435,7 +435,9 @@ class BaseView(BrowserView):
 
             for k in data.keys():
                 if k not in required_fields:
-                    if not data[k]:
+
+                    # If it's not a boolean value, and an empty value, delete it.
+                    if not isinstance(data[k], bool) and not data[k]:
                         del data[k]
 
         return data
