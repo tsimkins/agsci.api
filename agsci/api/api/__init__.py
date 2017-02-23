@@ -9,6 +9,7 @@ from decimal import Decimal
 from datetime import datetime
 from plone.autoform.interfaces import IFormFieldProvider
 from zope.component import getAdapters
+from zope.component.hooks import getSite
 from zope.interface import implements
 from zope.publisher.interfaces import IPublishTraverse
 
@@ -188,19 +189,23 @@ class BaseView(BrowserView):
         return m
 
     def getIndexData(self):
-        try:
-            # Initialize all index values as blank
-            data = dict([(x, '') for x in self.portal_catalog.indexes()])
 
+        # Initialize all index values as blank
+        data = dict([(x, '') for x in self.portal_catalog.indexes()])
+
+        try:
             # Update with actual values
             data.update(
                 self.portal_catalog.getIndexDataForUID("/".join(self.context.getPhysicalPath()))
                 )
 
-            # Return listing
-            return data
         except:
-            return {} # Return an empty dict if there's an issue with the catalog
+            # Skip if the object is not found (uncataloged objects for testing)
+            pass
+
+        # Return listing
+        return data
+
 
     def getCatalogData(self):
         data = self.getMetadata()
@@ -289,13 +294,26 @@ class BaseView(BrowserView):
             'registration_fieldsets',
             'IsChildProduct',
             'leadimage_show',
+            'leadimage_caption',
+            'leadimage_full_width',
+            'is_default_page',
+            'homepage',
+            'filters',
+            'subject',
+            'remote_url',
+            'location',
         ]
 
         if not self.isProduct():
+
+            # Team/category info
             exclude_fields.extend([
                     'program_team',
                     'state_extension_team',
                     'curriculum',
+                    'category_level1',
+                    'category_level2',
+                    'category_level3',
                 ]
             )
 
@@ -696,7 +714,7 @@ class BaseView(BrowserView):
             if self.showBinaryData:
 
                 # Lead Image
-                if data.get('has_lead_image', False):
+                if data.get('has_lead_image', False) or self.show_all_fields:
                     img_field_name = 'leadimage'
                     img_field = getattr(self.context, img_field_name, None)
 
@@ -710,7 +728,7 @@ class BaseView(BrowserView):
                         }
 
                 # File Field
-                if data.get('file', None) and self.showBinaryData:
+                if data.get('file', None) or self.show_all_fields:
                     file_field_name = 'file'
                     file_field = getattr(self.context, file_field_name, None)
 
@@ -743,7 +761,7 @@ class BaseView(BrowserView):
         else:
             # If we're not a Product, copy the value for `plone_product_type`
             # into `product_type` for the integration.
-            data['product_type'] = data['plone_product_type']
+            data['product_type'] = data.get('plone_product_type', None)
 
             # Remove all the product fields for non-products
             for k in ('publish_date', 'product_expiration', 'updated_at',
