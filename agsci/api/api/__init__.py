@@ -770,7 +770,7 @@ class BaseView(BrowserView):
                     del data[k]
 
         # Body text
-        if hasattr(self.context, 'text') and hasattr(self.context.text, 'raw'):
+        if hasattr(aq_base(self.context), 'text') and hasattr(aq_base(self.context).text, 'raw'):
             data['description'] = self.context.text.raw
 
         # Delete explicitly delete
