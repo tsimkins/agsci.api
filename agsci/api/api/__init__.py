@@ -657,16 +657,31 @@ class BaseView(BrowserView):
 
         return _data
 
-    def _getData(self, subproduct=True):
+    # This method calls .getData() and handles the 'all' and 'sku' URL parameters.
+    def _getData(self, **kwargs):
 
-        data = self.getData(subproduct=subproduct)
+        # Get the objects' data
+        data = self.getData(**kwargs)
 
+        # If the 'all' or 'sku' URL parameters were passed, we need to handle
+        # the request a little differently.
         if self.showAllProducts or self.showSKU:
+
+            # Make the data for the API call into a list
             data = [data,]
+
+            # Extend with any shadow data, so we have "all" the data
             data.extend(self.getShadowData())
 
+            # Now, if we have a SKU passed via URL parameter, filter the list by
+            # the SKU provided.  If no results, return empty dict.
             if self.showSKU:
                 data = [x for x in data if x.get('sku', '') == self.showSKU]
+
+                if data:
+                    data = data[0]
+                else:
+                    data = {}
 
         return data
 
