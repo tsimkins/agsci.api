@@ -8,7 +8,8 @@ from agsci.leadimage.content.behaviors import LeadImage
 from decimal import Decimal
 from datetime import datetime
 from plone.autoform.interfaces import IFormFieldProvider
-from zope.component import getAdapters
+from urllib import urlencode
+from zope.component import getAdapters, getMultiAdapter
 from zope.component.hooks import getSite
 from zope.interface import implements
 from zope.publisher.interfaces import IPublishTraverse
@@ -148,6 +149,20 @@ class BaseView(BrowserView):
         v = self.request.form.get('bin', 'True')
         return not (v.lower() in ('false', '0'))
 
+    # Check if we should get all products based on URL parameter
+    # Defaults to False
+    @property
+    def showAllProducts(self):
+        v = self.request.form.get('all', 'False')
+        return not (v.lower() in ('false', '0'))
+
+    # Check if we have a 'sku' URL parameter
+    # Defaults to False
+    @property
+    def showSKU(self):
+        return self.request.form.get('sku', None)
+
+    # Returns the data format (JSON/XML)
     def getDataFormat(self):
 
         if self.data_format and self.data_format in self.valid_data_formats:
@@ -642,7 +657,20 @@ class BaseView(BrowserView):
 
         return _data
 
-    def getData(self, subproduct=True):
+    def _getData(self, subproduct=True):
+
+        data = self.getData(subproduct=subproduct)
+
+        if self.showAllProducts or self.showSKU:
+            data = [data,]
+            data.extend(self.getShadowData())
+
+            if self.showSKU:
+                data = [x for x in data if x.get('sku', '') == self.showSKU]
+
+        return data
+
+    def getData(self, subproduct=True, **kwargs):
 
         # Pull data from catalog
         data = self.getCatalogData()
@@ -787,10 +815,10 @@ class BaseView(BrowserView):
         return data
 
     def getJSON(self):
-        return json.dumps(self.getData(), indent=4, sort_keys=True)
+        return json.dumps(self._getData(), indent=4, sort_keys=True)
 
     def getXML(self):
-        return dicttoxml.dicttoxml(self.getData(), custom_root='item')
+        return dicttoxml.dicttoxml(self._getData(), custom_root='item')
 
     def __call__(self):
 
@@ -926,6 +954,11 @@ class BaseView(BrowserView):
                 else:
                     # Verify that we got a dict back, and update
                     if isinstance(ad, dict):
+
+                        # Add SKU to API URL so it links back to the subproduct
+                        # API call
+                        ad = self.updateAPILinks(ad)
+
                         data.append(ad)
 
         # Filter out empty items
@@ -950,7 +983,40 @@ class BaseView(BrowserView):
                 else:
                     # Verify that we got a dict back, and update
                     if isinstance(ad, dict) and ad:
+
+                        # Add SKU to API URL so it links back to the subproduct
+                        # API call
+                        ad = self.updateAPILinks(ad)
                         data.append(ad)
+
+        return data
+
+    def updateAPILinks(self, data):
+
+        # The API URL fields to update
+        fields = [
+            'api_url_json',
+            'api_url_xml',
+        ]
+
+        # Get the SKU from the data
+        sku = data.get('sku',  None)
+
+        # If it's a non-null sku, add it to the URL
+        if isinstance(sku, (str, unicode)) and sku:
+            params = {'sku' : sku}
+
+            for k in fields:
+                url = data.get(k, None)
+                if isinstance(url, (str, unicode)) and url:
+
+                    # http://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
+                    url_parts = list(urlparse.urlparse(url))
+                    query = dict(urlparse.parse_qsl(url_parts[4]))
+                    query.update(params)
+
+                    url_parts[4] = urlencode(query)
+                    data[k] = urlparse.urlunparse(url_parts)
 
         return data
 
@@ -959,8 +1025,8 @@ class BaseContainerView(BaseView):
     def getContents(self):
         return self.context.listFolderContents()
 
-    def getData(self):
-        data = super(BaseContainerView, self).getData()
+    def getData(self, subproduct=True, **kwargs):
+        data = super(BaseContainerView, self).getData(subproduct=subproduct)
 
         if self.isRecursive:
             contents = self.getContents()
@@ -969,10 +1035,8 @@ class BaseContainerView(BaseView):
                 data['contents'] = []
 
                 for o in contents:
-
-                    api_data = o.restrictedTraverse('@@api')
-
-                    data['contents'].append(api_data.getData())
+                    api_view = getMultiAdapter((o, self.request), name='api')
+                    data['contents'].append(api_view.getData(subproduct=subproduct))
 
         return data
 

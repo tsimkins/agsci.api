@@ -256,13 +256,13 @@ class SampleAPIView(PloneSiteView):
     def portal_types(self):
         return getToolByName(self.context, "portal_types")
 
-    def getData(self):
+    def getData(self, **kwargs):
 
-        # Since the ._getData() method has the potential to be a little wonky,
+        # Since the .getSampleData() method has the potential to be a little wonky,
         # catch and pass along exceptions.  Then abort the transaction so an
         # exception won't cause any actual changes.
         try:
-            data = execute_under_special_role(['Contributor', 'Reader', 'Editor', 'Member'], self._getData)
+            data = execute_under_special_role(['Contributor', 'Reader', 'Editor', 'Member'], self.getSampleData)
         except Exception, e:
             data = {
                     'exception' : e.__class__.__name__,
@@ -275,7 +275,7 @@ class SampleAPIView(PloneSiteView):
         return data
 
     # Create a temporary structure and get merged API output of that structure.
-    def _getData(self):
+    def getSampleData(self):
 
         # List of objects
         objects = []

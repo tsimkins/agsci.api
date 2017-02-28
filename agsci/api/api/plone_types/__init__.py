@@ -19,7 +19,7 @@ class PloneSiteView(BaseView):
     # will be handled separately (in the directory)
     exclude_types = ['Person', ]
 
-    def getData(self):
+    def getData(self, **kwargs):
 
         # Data structure to return
         data = {}
