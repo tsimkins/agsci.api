@@ -928,6 +928,9 @@ class BaseView(BrowserView):
                     if isinstance(ad, dict):
                         data.append(ad)
 
+        # Filter out empty items
+        data = [x for x in data if x]
+
         return data
 
     # Get data for Sub Products
