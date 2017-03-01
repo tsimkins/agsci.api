@@ -5,6 +5,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
 from plone.namedfile.file import NamedBlobFile
 from agsci.leadimage.content.behaviors import LeadImage
+from collections import OrderedDict
 from decimal import Decimal
 from datetime import datetime
 from plone.autoform.interfaces import IFormFieldProvider
@@ -20,6 +21,7 @@ import json
 import re
 import urllib2
 import urlparse
+import xml.dom.minidom
 
 from agsci.atlas.content.behaviors import IShadowProduct, ISubProduct
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, getBaseSchema
@@ -46,6 +48,8 @@ first_cap_re = re.compile('(.)([A-Z][a-z]+)')
 all_cap_re = re.compile('([a-z0-9])([A-Z])')
 
 class BaseView(BrowserView):
+
+    pretty_xml = False
 
     implements(IPublishTraverse)
 
@@ -829,11 +833,53 @@ class BaseView(BrowserView):
 
         return data
 
+    def orderKeys(self, data):
+
+        if isinstance(data, dict):
+            print "It's a dict"
+            for k in data.keys():
+                data[k] = self.orderKeys(data[k])
+
+            return OrderedDict(sorted(data.items(), key=lambda t: t[0]))
+
+        elif isinstance(data, (tuple, list)):
+            data = list(data)
+
+            for i in range(0, len(data)):
+                data[i] = self.orderKeys(data[i])
+
+            return data
+
+        else:
+            return data
+
     def getJSON(self):
         return json.dumps(self._getData(), indent=4, sort_keys=True)
 
     def getXML(self):
-        return dicttoxml.dicttoxml(self._getData(), custom_root='item')
+
+        if not self.pretty_xml:
+            return dicttoxml.dicttoxml(self._getData(), custom_root='item')
+
+        else:
+
+            # Get the data
+            data = self._getData()
+
+            # Recursively order the keys in dict
+            # https://docs.python.org/2/library/collections.html#collections.OrderedDict
+            data = self.orderKeys(data)
+
+            # Convert the OrderedDict to XML
+            xml_string = dicttoxml.dicttoxml(data, custom_root='item')
+
+            # Replace type="..." in XML
+            list_re = re.compile('\s*type=".*?"', re.I|re.M)
+            xml_string = list_re.sub('', xml_string)
+
+            # Return pretty XML
+            # http://stackoverflow.com/questions/749796/pretty-printing-xml-in-python
+            return xml.dom.minidom.parseString(xml_string).toprettyxml()
 
     def __call__(self):
 
