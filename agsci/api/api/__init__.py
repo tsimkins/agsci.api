@@ -427,9 +427,13 @@ class BaseView(BrowserView):
             elif isinstance(v, DateTime):
                 data[k] = toISO(data[k])
 
-            # Convert decimal to string with two decimal places.
+            # Convert decimal to string with two decimal places, or eight for
+            # lat/lon
             elif isinstance(v, Decimal):
-                data[k] = '%0.2f' % v
+                if k in ['latitude', 'longitude']:
+                    data[k] = '%0.8f' % v
+                else:
+                    data[k] = '%0.2f' % v
 
             # XML type logic sees `zope.i18nmessageid.message.Message` as a list
             # and returns the type one letter at a time as a list.
