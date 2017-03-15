@@ -32,6 +32,7 @@ from agsci.atlas.content.behaviors import IAtlasInternalMetadata, \
      IAtlasProductCategoryMetadata, IAtlasProductAttributeMetadata
 from agsci.atlas.content.event.cvent import ICventEvent
 from agsci.atlas.content.publication import IPublication
+from agsci.atlas.constants import V_CS
 
 from ..interfaces import IAPIDataAdapter
 
@@ -710,7 +711,7 @@ class BaseView(BrowserView):
 
             # Magento Visibility.  Provide default if not already set.
             if not data.has_key('visibility'):
-                data['visibility'] = 'Catalog, Search'
+                data['visibility'] = V_CS
 
             # Map product type to what Magento expects
             data.update(self.mapProductType(data))
