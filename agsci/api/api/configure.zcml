@@ -11,7 +11,7 @@
         for="*"
         name="api"
         class=".BaseView"
-        permission="zope2.View"
+        permission="zope.Public"
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
@@ -21,7 +21,7 @@
         for=" plone.dexterity.interfaces.IDexterityContainer"
         name="api"
         class=".BaseContainerView"
-        permission="zope2.View"
+        permission="zope.Public"
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
@@ -31,7 +31,7 @@
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
         name="api"
         class=".plone_types.PloneSiteView"
-        permission="zope2.View"
+        permission="zope.Public"
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
@@ -39,7 +39,7 @@
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
         name="api-sample"
         class=".plone_types.sample.SampleAPIView"
-        permission="zope2.View"
+        permission="zope.Public"
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
@@ -49,7 +49,7 @@
         for="plone.app.contenttypes.interfaces.IImage"
         name="api"
         class=".plone_types.image.ImageView"
-        permission="zope2.View"
+        permission="zope.Public"
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
@@ -59,7 +59,7 @@
         for="plone.app.contenttypes.interfaces.IFile"
         name="api"
         class=".plone_types.file.FileView"
-        permission="zope2.View"
+        permission="zope.Public"
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 

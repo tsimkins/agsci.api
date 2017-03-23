@@ -24,7 +24,8 @@ import urlparse
 import xml.dom.minidom
 
 from agsci.atlas.content.behaviors import IShadowProduct, ISubProduct
-from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, getBaseSchema
+from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, \
+                                  getBaseSchema, execute_under_special_role
 
 # Custom Atlas Schemas
 from agsci.atlas.content import atlas_schemas, DELIMITER, IAtlasProduct
@@ -666,6 +667,10 @@ class BaseView(BrowserView):
 
         return _data
 
+    @property
+    def data(self, **kwargs):
+        return execute_under_special_role(['Authenticated'], self._getData, **kwargs)
+
     # This method calls .getData() and handles the 'all' and 'sku' URL parameters.
     def _getData(self, **kwargs):
 
@@ -859,17 +864,17 @@ class BaseView(BrowserView):
             return data
 
     def getJSON(self):
-        return json.dumps(self._getData(), indent=4, sort_keys=True)
+        return json.dumps(self.data, indent=4, sort_keys=True)
 
     def getXML(self):
 
         if not self.pretty_xml:
-            return dicttoxml.dicttoxml(self._getData(), custom_root='item')
+            return dicttoxml.dicttoxml(self.data, custom_root='item')
 
         else:
 
             # Get the data
-            data = self._getData()
+            data = self.data
 
             # Recursively order the keys in dict
             # https://docs.python.org/2/library/collections.html#collections.OrderedDict
