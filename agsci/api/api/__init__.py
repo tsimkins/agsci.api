@@ -23,7 +23,8 @@ import urllib2
 import urlparse
 import xml.dom.minidom
 
-from agsci.atlas.content.behaviors import IShadowProduct, ISubProduct
+from agsci.atlas.content.behaviors import IShadowProduct, ISubProduct, \
+                                          IAdditionalCategories
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, \
                                   getBaseSchema, execute_under_special_role
 
@@ -734,8 +735,14 @@ class BaseView(BrowserView):
 
                 if j:
                     del data[i]
+            # Convert the Plone categories (all levels) into (L1, L2, L3)
+            categories = self.minimizeStructure(categories)
 
-            data['categories'] = self.minimizeStructure(categories)
+            # Add additional "categories" for Magento that are not IA categories
+            categories.extend(self.additionalCategories(categories))
+
+            # Set the API 'categories' attribute
+            data['categories'] = categories
 
             # Populate Extension Structure Information
             extension_structure_keys = ['state_extension_team', 'program_team', 'curriculum']
@@ -1061,6 +1068,28 @@ class BaseView(BrowserView):
                         data.append(ad)
 
         return data
+
+    # Get additional catgories via adapters
+    def additionalCategories(self, categories=[]):
+
+        data = []
+
+        if IAdditionalCategories.providedBy(self.context):
+
+            for (name, adapted) in getAdapters((self.context,), IAdditionalCategories):
+                try:
+                    # Pull the values, and update the API data
+                    ad = adapted(categories=categories)
+                except AttributeError:
+                    # If there's no '__call__()' method, skip
+                    pass
+                else:
+                    # Verify that we got a list/tuple back, and add those categories
+                    # to the master list
+                    if isinstance(ad, (list, tuple)) and ad:
+                        data.extend(ad)
+
+        return list(set(data))
 
     def updateAPILinks(self, data):
 
