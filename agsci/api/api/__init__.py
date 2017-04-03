@@ -324,6 +324,10 @@ class BaseView(BrowserView):
             'subject',
             'remote_url',
             'location',
+            'atlas_educational_drivers',
+            'educational_drivers',
+            'homepage_feature',
+            'homepage_topics',
         ]
 
         if not self.isProduct():
