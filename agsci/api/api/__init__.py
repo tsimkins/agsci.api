@@ -739,6 +739,7 @@ class BaseView(BrowserView):
 
                 if j:
                     del data[i]
+
             # Convert the Plone categories (all levels) into (L1, L2, L3)
             categories = self.minimizeStructure(categories)
 
@@ -748,21 +749,25 @@ class BaseView(BrowserView):
             # Set the API 'categories' attribute
             data['categories'] = categories
 
-            # Populate Extension Structure Information
-            extension_structure_keys = ['state_extension_team', 'program_team', 'curriculum']
+            # Populate Extension Structure Information if none was set
+            # through an adapter.
+            if not data.has_key('extension_structure'):
+                extension_structure_keys = ['state_extension_team', 'program_team', 'curriculum']
 
-            extension_structure = []
+                extension_structure = []
 
-            for i in extension_structure_keys:
-                j = data.get(i, [])
+                for i in extension_structure_keys:
+                    j = data.get(i, [])
 
-                if j:
-                    for k in j:
-                        extension_structure.append(tuple(k.split(DELIMITER)))
+                    if j:
+                        for k in j:
+                            extension_structure.append(tuple(k.split(DELIMITER)))
 
-                    del data[i]
+                        del data[i]
 
-            data['extension_structure'] = self.minimizeStructure(extension_structure, keys=extension_structure_keys)
+                if extension_structure:
+                    data['extension_structure'] = \
+                        self.minimizeStructure(extension_structure, keys=extension_structure_keys)
 
             # Populate people information
 
