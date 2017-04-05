@@ -18,7 +18,10 @@ from zope.publisher.interfaces import IPublishTraverse
 import Missing
 import dicttoxml
 import json
+import pickle
 import re
+import redis
+import urllib
 import urllib2
 import urlparse
 import xml.dom.minidom
@@ -43,6 +46,9 @@ class DeleteValue(object):
     pass
 
 DELETE_VALUE = DeleteValue()
+
+# Maximum data timeout, seconds
+CACHED_DATA_TIMEOUT = 86400.0
 
 # Prevent debug messages in log
 dicttoxml.set_debug(False)
@@ -674,7 +680,42 @@ class BaseView(BrowserView):
 
     @property
     def data(self, **kwargs):
-        return execute_under_special_role(['Authenticated'], self._getData, **kwargs)
+
+        # Get the cached data
+        cached_data = self.getCachedData(**kwargs)
+
+        # If there's something cached
+        if cached_data:
+
+            # Grab the last modified time from the cache
+            last_modified = cached_data.get('updated_at', None)
+
+            # If we have a last modified datetime
+            if last_modified:
+
+                # Convert to DateTime
+                last_modified = DateTime(last_modified)
+
+                # Get the object's modification time
+                object_modified = self.context.modified()
+
+                # How different are the modified dates?
+                last_modified_diff = abs(86400.0*(last_modified - object_modified))
+
+                # If the last modified time is within a few seconds of the
+                # object's actual last modified time, it's a valid cache
+                if last_modified < 5.0:
+
+                    return cached_data
+
+        # If we fall through, and there's no cache, call the API
+        data = execute_under_special_role(['Authenticated'], self._getData, **kwargs)
+
+        # Store the cached value
+        self.setCachedData(data, **kwargs)
+
+        # Return the value
+        return data
 
     # This method calls .getData() and handles the 'all' and 'sku' URL parameters.
     def _getData(self, **kwargs):
@@ -1128,6 +1169,37 @@ class BaseView(BrowserView):
                     data[k] = urlparse.urlunparse(url_parts)
 
         return data
+
+    @property
+    def redis(self):
+        return redis.StrictRedis(host='localhost', port=6379, db=0)
+
+    @property
+    def redis_cachekey(self):
+
+        values = {
+            'uid' : self.context.UID(),
+        }
+
+        values.update(self.request.form)
+
+        return u'CACHED_API__%s' % urllib.urlencode(values)
+
+    def getCachedData(self, **kwargs):
+
+        pickled_data = self.redis.get(self.redis_cachekey)
+
+        if pickled_data:
+            return pickle.loads(pickled_data)
+
+        return {}
+
+
+    def setCachedData(self, data={}, **kwargs):
+
+        pickled_data = pickle.dumps(data)
+
+        self.redis.set(self.redis_cachekey, pickled_data)
 
 class BaseContainerView(BaseView):
 
