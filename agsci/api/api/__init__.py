@@ -2,6 +2,7 @@ from Acquisition import aq_base
 from BeautifulSoup import BeautifulSoup
 from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from plone.namedfile.file import NamedBlobFile
 from agsci.leadimage.content.behaviors import LeadImage
@@ -9,6 +10,7 @@ from collections import OrderedDict
 from decimal import Decimal
 from datetime import datetime
 from plone.autoform.interfaces import IFormFieldProvider
+from time import time
 from urllib import urlencode
 from zope.component import getAdapters, getMultiAdapter
 from zope.component.hooks import getSite
@@ -18,6 +20,7 @@ from zope.publisher.interfaces import IPublishTraverse
 import Missing
 import dicttoxml
 import json
+import logging
 import pickle
 import re
 import redis
@@ -162,6 +165,13 @@ class BaseView(BrowserView):
         v = self.request.form.get('bin', 'True')
         return not (v.lower() in ('false', '0'))
 
+    # Check if we're including brain data
+    # Defaults to False
+    @property
+    def showBrain(self):
+        v = self.request.form.get('brain', 'False')
+        return not not (v.lower() in ('true', '0'))
+
     # Check if we should get all products based on URL parameter
     # Defaults to False
     @property
@@ -242,6 +252,10 @@ class BaseView(BrowserView):
         for i in indexdata.keys():
             if not data.has_key(i):
                 data[i] = indexdata[i]
+
+        # Include a pickled brain in data
+        if self.showBrain:
+            data['brain'] = pickle.dumps(data)
 
         return self.fixData(data)
 
@@ -704,7 +718,7 @@ class BaseView(BrowserView):
 
                 # If the last modified time is within a few seconds of the
                 # object's actual last modified time, it's a valid cache
-                if last_modified < 5.0:
+                if last_modified_diff < 2.0:
 
                     return cached_data
 
@@ -1190,7 +1204,10 @@ class BaseView(BrowserView):
         pickled_data = self.redis.get(self.redis_cachekey)
 
         if pickled_data:
+            self.log(u"Found cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
             return pickle.loads(pickled_data)
+
+        self.log(u"Did not find cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
 
         return {}
 
@@ -1200,6 +1217,12 @@ class BaseView(BrowserView):
         pickled_data = pickle.dumps(data)
 
         self.redis.set(self.redis_cachekey, pickled_data)
+
+        self.log(u"Set cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
+
+    def log(self, msg=''):
+        logger = logging.getLogger('agsci.api')
+        logger.info(msg)
 
 class BaseContainerView(BaseView):
 
@@ -1217,9 +1240,14 @@ class BaseContainerView(BaseView):
 
                 for o in contents:
                     api_view = getMultiAdapter((o, self.request), name='api')
-                    data['contents'].append(api_view.getData(subproduct=subproduct))
+                    data['contents'].append(api_view.data)
 
         return data
+
+    @property
+    def redis_cachekey(self):
+        cachekey = super(BaseContainerView, self).redis_cachekey
+        return '%s_%d' % (cachekey, time() // 600)
 
 def getAPIData(object_url):
 
