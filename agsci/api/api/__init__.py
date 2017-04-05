@@ -330,7 +330,7 @@ class BaseView(BrowserView):
             'homepage_topics',
         ]
 
-        if not self.isProduct():
+        if self.isChildProduct() or not self.isProduct():
 
             # Team/category info
             exclude_fields.extend([
@@ -492,16 +492,25 @@ class BaseView(BrowserView):
 
     # Determine if we have a product, based on if we have the metadata
     # assigned to it.
-    def isProduct(self):
+    def isProduct(self, context=None):
+
+        if not context:
+            context = self.context
 
         for _interface in [ IAtlasProduct, IAtlasInternalMetadata,
                             IAtlasProductCategoryMetadata,
                             IAtlasProductAttributeMetadata]:
 
-            if _interface.providedBy(self.context):
+            if _interface.providedBy(context):
                 return True
 
         return False
+
+    #
+    def isChildProduct(self):
+        parent = self.context.aq_parent
+
+        return self.isProduct(parent)
 
     # Takes a list of variable-length tuples, and condenses that into the
     # minimum set necessary to prevent duplication.  For example:
