@@ -29,6 +29,7 @@ setup(name='agsci.api',
       'BeautifulSoup',
       'dicttoxml',
       'plone.app.contenttypes',
+      'redis',
       # -*- Extra requirements: -*-
       ],
     entry_points="""
