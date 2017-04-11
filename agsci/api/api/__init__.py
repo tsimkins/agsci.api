@@ -755,6 +755,9 @@ class BaseView(BrowserView):
             # Add additional "categories" for Magento that are not IA categories
             categories.extend(self.additionalCategories(categories))
 
+            # Re-run the minimize structure to account for "fake" L3 categories
+            categories = self.minimizeStructure(categories)
+
             # Set the API 'categories' attribute
             data['categories'] = categories
 
