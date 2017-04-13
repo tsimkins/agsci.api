@@ -8,7 +8,7 @@ from plone.namedfile.file import NamedBlobFile
 from agsci.leadimage.content.behaviors import LeadImage
 from collections import OrderedDict
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 from plone.autoform.interfaces import IFormFieldProvider
 from time import time
 from urllib import urlencode
@@ -50,7 +50,10 @@ class DeleteValue(object):
 
 DELETE_VALUE = DeleteValue()
 
-# Maximum data timeout, seconds
+# Maximum data timeout, seconds.
+# This is a failsafe to prevent stale data.  Also, as I read the documentation,
+# this will delete results after the timeout (one day) and avoid building up
+# unused cached values in memory.
 CACHED_DATA_TIMEOUT = 86400.0
 
 # Prevent debug messages in log
@@ -707,29 +710,11 @@ class BaseView(BrowserView):
         # Get the cached data
         cached_data = self.getCachedData(**kwargs)
 
-        # If there's something cached
+        # If there's something cached, return it.  Cache key implicitly has the
+        # last modified date, so if an item changes, it automagically invalidates
+        # the cache.
         if cached_data:
-
-            # Grab the last modified time from the cache
-            last_modified = cached_data.get('updated_at', None)
-
-            # If we have a last modified datetime
-            if last_modified:
-
-                # Convert to DateTime
-                last_modified = DateTime(last_modified)
-
-                # Get the object's modification time
-                object_modified = self.context.modified()
-
-                # How different are the modified dates?
-                last_modified_diff = abs(86400.0*(last_modified - object_modified))
-
-                # If the last modified time is within a few seconds of the
-                # object's actual last modified time, it's a valid cache
-                if last_modified_diff < 2.0:
-
-                    return cached_data
+            return cached_data
 
         # If we fall through, and there's no cache, call the API
         data = execute_under_special_role(['Authenticated'], self._getData, **kwargs)
@@ -1196,19 +1181,63 @@ class BaseView(BrowserView):
 
         return data
 
+    # Borrowed from:
+    # https://docs.plone.org/develop/plone/serving/http_request_and_response.html
+    @property
+    def hostname(self):
+
+        request = self.request
+
+        if "HTTP_X_FORWARDED_HOST" in request.environ:
+            # Virtual host
+            host = request.environ["HTTP_X_FORWARDED_HOST"]
+
+        elif "HTTP_HOST" in request.environ:
+            # Direct client request
+            host = request.environ["HTTP_HOST"]
+
+        else:
+            return 'unknown'
+
+        # separate to domain name and port sections
+        host=host.split(":")[0].lower()
+
+        return host
+
     @property
     def redis(self):
         return redis.StrictRedis(host='localhost', port=6379, db=0)
 
     @property
-    def redis_cachekey(self):
+    def last_modified(self):
+        return [self.context.modified(),]
 
+    @property
+    def redis_cachekey_values(self):
+
+        # Convert to ISO8601 strings
+        last_modified = [x.ISO8601() for x in self.last_modified if hasattr(x, 'ISO8601')]
+
+        # Unique keys for object UID and hostname
         values = {
             'uid' : self.context.UID(),
+            'hostname' : self.hostname,
+            'modified' : last_modified,
         }
 
+        # Plus the values of the request form
         values.update(self.request.form)
 
+        return values
+
+    @property
+    def redis_cachekey(self):
+
+        # Sorting values by key
+        values = OrderedDict(sorted(self.redis_cachekey_values.iteritems(), key=lambda x: x[0]))
+
+        # Prepend a static string, in case we want to use REDIS for other cached
+        # data
         return u'CACHED_API__%s' % urllib.urlencode(values)
 
     def getCachedData(self, **kwargs):
@@ -1228,7 +1257,9 @@ class BaseView(BrowserView):
 
         pickled_data = pickle.dumps(data)
 
-        self.redis.set(self.redis_cachekey, pickled_data)
+        timeout = timedelta(seconds=CACHED_DATA_TIMEOUT)
+
+        self.redis.setex(self.redis_cachekey, timeout, pickled_data)
 
         self.log(u"Set cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
 
@@ -1256,10 +1287,12 @@ class BaseContainerView(BaseView):
 
         return data
 
+    # Concatenation of own context last_modified, plus all contents
     @property
-    def redis_cachekey(self):
-        cachekey = super(BaseContainerView, self).redis_cachekey
-        return '%s_%d' % (cachekey, time() // 600)
+    def last_modified(self):
+        last_modified = super(BaseContainerView, self).last_modified
+        last_modified.extend([x.modified() for x in self.getContents()])
+        return last_modified
 
 def getAPIData(object_url):
 
