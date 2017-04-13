@@ -1242,7 +1242,15 @@ class BaseView(BrowserView):
 
     def getCachedData(self, **kwargs):
 
-        pickled_data = self.redis.get(self.redis_cachekey)
+        try:
+            pickled_data = self.redis.get(self.redis_cachekey)
+
+        except Exception, e:
+
+            # Errors connecting?  Log and return an empty value.
+            self.log(u"Could not connect to redis server: %s" % e.__class__.__name__)
+
+            return {}
 
         if pickled_data:
             self.log(u"Found cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
@@ -1259,9 +1267,18 @@ class BaseView(BrowserView):
 
         timeout = timedelta(seconds=CACHED_DATA_TIMEOUT)
 
-        self.redis.setex(self.redis_cachekey, timeout, pickled_data)
+        try:
 
-        self.log(u"Set cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
+            self.redis.setex(self.redis_cachekey, timeout, pickled_data)
+
+        except Exception, e:
+
+            # Errors connecting?  Log.
+            self.log(u"Could not connect to redis server: %s" % e.__class__.__name__)
+
+        else:
+
+            self.log(u"Set cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
 
     def log(self, msg=''):
         logger = logging.getLogger('agsci.api')
