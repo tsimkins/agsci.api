@@ -4,6 +4,9 @@ from Products.CMFCore.utils import getToolByName
 
 class PloneSiteView(BaseView):
 
+    # Don't cache API views for the Plone site
+    cache = False
+
     # Listing of interfaces that products provide
     product_interfaces = [
                             'agsci.atlas.content.IAtlasProduct',

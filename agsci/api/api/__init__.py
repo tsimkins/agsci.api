@@ -74,6 +74,9 @@ class BaseView(BrowserView):
 
     show_all_fields = False
 
+    # Enable caching for this view
+    cache = True
+
     # Default window for listing updated items
     default_updated = 3600
 
@@ -1212,6 +1215,15 @@ class BaseView(BrowserView):
     def last_modified(self):
         return [self.context.modified(),]
 
+    # Handles the issue where we're running the API against something
+    # that doesn't have a UID method.
+    @property
+    def UID(self):
+        try:
+            return self.context.UID()
+        except AttributeError:
+            return self.context.getId()
+
     @property
     def redis_cachekey_values(self):
 
@@ -1220,7 +1232,7 @@ class BaseView(BrowserView):
 
         # Unique keys for object UID and hostname
         values = {
-            'uid' : self.context.UID(),
+            'uid' : self.UID,
             'hostname' : self.hostname,
             'modified' : last_modified,
         }
@@ -1242,43 +1254,47 @@ class BaseView(BrowserView):
 
     def getCachedData(self, **kwargs):
 
-        try:
-            pickled_data = self.redis.get(self.redis_cachekey)
+        if self.cache:
 
-        except Exception, e:
+            try:
+                pickled_data = self.redis.get(self.redis_cachekey)
 
-            # Errors connecting?  Log and return an empty value.
-            self.log(u"Could not connect to redis server: %s" % e.__class__.__name__)
+            except Exception, e:
 
-            return {}
+                # Errors connecting?  Log and return an empty value.
+                self.log(u"Could not connect to redis server: %s" % e.__class__.__name__)
 
-        if pickled_data:
-            self.log(u"Found cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
-            return pickle.loads(pickled_data)
+                return {}
 
-        self.log(u"Did not find cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
+            if pickled_data:
+                self.log(u"Found cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
+                return pickle.loads(pickled_data)
+
+            self.log(u"Did not find cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
 
         return {}
 
 
     def setCachedData(self, data={}, **kwargs):
 
-        pickled_data = pickle.dumps(data)
+        if self.cache:
 
-        timeout = timedelta(seconds=CACHED_DATA_TIMEOUT)
+            pickled_data = pickle.dumps(data)
 
-        try:
+            timeout = timedelta(seconds=CACHED_DATA_TIMEOUT)
 
-            self.redis.setex(self.redis_cachekey, timeout, pickled_data)
+            try:
 
-        except Exception, e:
+                self.redis.setex(self.redis_cachekey, timeout, pickled_data)
 
-            # Errors connecting?  Log.
-            self.log(u"Could not connect to redis server: %s" % e.__class__.__name__)
+            except Exception, e:
 
-        else:
+                # Errors connecting?  Log.
+                self.log(u"Could not connect to redis server: %s" % e.__class__.__name__)
 
-            self.log(u"Set cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
+            else:
+
+                self.log(u"Set cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
 
     def log(self, msg=''):
         logger = logging.getLogger('agsci.api')
