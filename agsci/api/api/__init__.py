@@ -10,9 +10,10 @@ from collections import OrderedDict
 from decimal import Decimal
 from datetime import datetime, timedelta
 from plone.autoform.interfaces import IFormFieldProvider
+from plone.registry.interfaces import IRegistry
 from time import time
 from urllib import urlencode
-from zope.component import getAdapters, getMultiAdapter
+from zope.component import getAdapters, getMultiAdapter, getUtility
 from zope.component.hooks import getSite
 from zope.interface import implements
 from zope.publisher.interfaces import IPublishTraverse
@@ -79,6 +80,33 @@ class BaseView(BrowserView):
 
     # Default window for listing updated items
     default_updated = 3600
+
+    # Registry utility
+    @property
+    def registry(self):
+        return getUtility(IRegistry)
+
+    # Checks to see if we're in debug mode.
+    @property
+    def debug(self):
+
+        registry_debug = self.registry.get('agsci.atlas.api_debug')
+
+        url_debug = not not self.request.get_header('X-API-DEBUG')
+
+        return (registry_debug or url_debug)
+
+    # Checks to see if caching is enabled.
+    @property
+    def caching_enabled(self):
+
+        if self.cache:
+
+            registry_cache = not not self.registry.get('agsci.atlas.api_cache')
+
+            return registry_cache
+
+            return False
 
     # Check if we've been passed an `updated` URL parameter.
     # Returns default value of `default_updated` if a non-numeric value is
@@ -1254,7 +1282,7 @@ class BaseView(BrowserView):
 
     def getCachedData(self, **kwargs):
 
-        if self.cache:
+        if self.caching_enabled:
 
             try:
                 pickled_data = self.redis.get(self.redis_cachekey)
@@ -1277,7 +1305,7 @@ class BaseView(BrowserView):
 
     def setCachedData(self, data={}, **kwargs):
 
-        if self.cache:
+        if self.caching_enabled:
 
             pickled_data = pickle.dumps(data)
 
@@ -1297,8 +1325,10 @@ class BaseView(BrowserView):
                 self.log(u"Set cache for %s: %s" % (safe_unicode(self.context.Title()), self.redis_cachekey))
 
     def log(self, msg=''):
-        logger = logging.getLogger('agsci.api')
-        logger.info(msg)
+
+        if self.debug:
+            logger = logging.getLogger('agsci.api')
+            logger.info(msg)
 
 class BaseContainerView(BaseView):
 
