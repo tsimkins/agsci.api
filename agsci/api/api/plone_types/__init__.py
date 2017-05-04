@@ -60,6 +60,16 @@ class PloneSiteView(BaseView):
             # Query catalog
             results = self.portal_catalog.searchResults(query)
 
+            # Method to calculate sort order. For now, this puts the group
+            # products first.
+            def sortOrder(x):
+                if x.Type.endswith(' Group'):
+                    return 0
+                return 1
+
+            # Sort Results
+            results = sorted(results, key=lambda x: sortOrder(x))
+
             # Iterate through results, skipping Person objects, and append
             # API export data to "contents" structure
             for r in results:
