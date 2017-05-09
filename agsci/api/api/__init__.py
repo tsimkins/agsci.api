@@ -1263,6 +1263,7 @@ class BaseView(BrowserView):
             'uid' : self.UID,
             'hostname' : self.hostname,
             'modified' : last_modified,
+            'url' : self.context.absolute_url(),
         }
 
         # Plus the values of the request form
