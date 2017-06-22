@@ -36,12 +36,12 @@ from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, \
                                   getBaseSchema, execute_under_special_role
 
 # Custom Atlas Schemas
-from agsci.atlas.content import atlas_schemas, DELIMITER, IAtlasProduct
+from agsci.atlas.content import atlas_schemas, IAtlasProduct
 from agsci.atlas.content.behaviors import IAtlasInternalMetadata, \
      IAtlasProductCategoryMetadata, IAtlasProductAttributeMetadata
 from agsci.atlas.content.event.cvent import ICventEvent
 from agsci.atlas.content.publication import IPublication
-from agsci.atlas.constants import V_CS
+from agsci.atlas.constants import DELIMITER, V_CS
 
 from ..interfaces import IAPIDataAdapter
 
