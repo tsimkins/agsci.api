@@ -57,9 +57,6 @@ DELETE_VALUE = DeleteValue()
 # unused cached values in memory.
 CACHED_DATA_TIMEOUT = 86400.0
 
-# Prevent debug messages in log
-dicttoxml.set_debug(False)
-
 first_cap_re = re.compile('(.)([A-Z][a-z]+)')
 all_cap_re = re.compile('([a-z0-9])([A-Z])')
 
@@ -966,6 +963,11 @@ class BaseView(BrowserView):
         return json.dumps(self.data, indent=4, sort_keys=True)
 
     def getXML(self):
+
+        # Prevent debug messages in log if not in debug mode
+        if not self.debug:
+            from dicttoxml import LOG as dicttoxml_LOG
+            dicttoxml_LOG.setLevel(logging.WARNING)
 
         if not self.pretty_xml:
             return dicttoxml.dicttoxml(self.data, custom_root='item')
