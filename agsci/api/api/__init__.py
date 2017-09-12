@@ -217,6 +217,13 @@ class BaseView(BrowserView):
     def showSKU(self):
         return self.request.form.get('sku', None)
 
+    # Reads the 'Hide product from listings.' field on the product and returns
+    # if product is hidden.
+    @property
+    def isHiddenProduct(self):
+        hide_product = getattr(self.context, 'hide_product', False)
+        return not not hide_product
+
     # Returns the data format (JSON/XML)
     def getDataFormat(self):
 
@@ -853,8 +860,9 @@ class BaseView(BrowserView):
             # Add store name categories as L0 (so to speak)
             categories = self.addStoreNameCategories(categories)
 
-            # Set the API 'categories' attribute
-            data['categories'] = categories
+            # Set the API 'categories' attribute if the product isn't hidden.
+            if not self.isHiddenProduct:
+                data['categories'] = categories
 
             # Populate Extension Structure Information if none was set
             # through an adapter.
