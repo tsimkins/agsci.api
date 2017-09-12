@@ -1,3 +1,4 @@
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
 from collective.z3cform.datagridfield.row import DictRow
 from copy import copy
@@ -225,7 +226,11 @@ class SampleAPIView(PloneSiteView):
                 LOG('API Sample Generator', INFO, msg)
 
             # Create a dummy object with default values
-            o = createContentInContainer(root, portal_type, **kwargs)
+            try:
+                o = createContentInContainer(root, portal_type, **kwargs)
+            except WorkflowException:
+                # For some reason, we're getting a workflow exception on article videos?
+                return rv
 
             # Append to return list
             rv.append(o)
@@ -249,6 +254,9 @@ class SampleAPIView(PloneSiteView):
                 except RuntimeError:
                     # Skip if something bombs out from recursive calls
                     pass
+                except TypeError:
+                    # Skip if something bombs out with a TypeError
+                    pass
 
             return rv
 
@@ -262,13 +270,19 @@ class SampleAPIView(PloneSiteView):
         # Since the .getSampleData() method has the potential to be a little wonky,
         # catch and pass along exceptions.  Then abort the transaction so an
         # exception won't cause any actual changes.
-        try:
+        if self.debug:
+
             data = execute_under_special_role(['Contributor', 'Reader', 'Editor', 'Member'], self.getSampleData)
-        except Exception, e:
-            data = {
-                    'exception' : e.__class__.__name__,
-                    'message' : e.message,
-                }
+
+        else:
+
+            try:
+                data = execute_under_special_role(['Contributor', 'Reader', 'Editor', 'Member'], self.getSampleData)
+            except Exception, e:
+                data = {
+                        'exception' : e.__class__.__name__,
+                        'message' : e.message,
+                    }
 
         # Abort the transaction so nothing actually gets created.
         transaction.abort()
