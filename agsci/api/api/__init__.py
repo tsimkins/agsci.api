@@ -610,6 +610,9 @@ class BaseView(BrowserView):
 
         for _ in c:
 
+            # Put the "old" category on the list -- temporary transitional fix
+            rv.append(_)
+
             _ = list(_)
 
             if _[0] == INTERNAL_STORE_CATEGORY_LEVEL_1:
