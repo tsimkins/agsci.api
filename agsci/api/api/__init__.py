@@ -41,7 +41,8 @@ from agsci.atlas.content.behaviors import IAtlasInternalMetadata, \
      IAtlasProductCategoryMetadata, IAtlasProductAttributeMetadata
 from agsci.atlas.content.event.cvent import ICventEvent
 from agsci.atlas.content.publication import IPublication
-from agsci.atlas.constants import DELIMITER, V_CS
+from agsci.atlas.constants import DELIMITER, V_CS, INTERNAL_STORE_CATEGORY_LEVEL_1, \
+                                  INTERNAL_STORE_NAME, EXTERNAL_STORE_NAME
 
 from ..interfaces import IAPIDataAdapter
 
@@ -601,6 +602,26 @@ class BaseView(BrowserView):
 
         return c
 
+    # Adds the appropriate "fake" internal or external store categories before each
+    # "real" category
+    def addStoreNameCategories(self, c):
+
+        rv = []
+
+        for _ in c:
+
+            _ = list(_)
+
+            if _[0] == INTERNAL_STORE_CATEGORY_LEVEL_1:
+                _.insert(0, INTERNAL_STORE_NAME)
+
+            elif _:
+                _.insert(0, EXTERNAL_STORE_NAME)
+
+            rv.append(tuple(_))
+
+        return rv
+
     # Given a Plone product type, return the expected Magento product type
     def mapProductType(self, data):
 
@@ -825,6 +846,9 @@ class BaseView(BrowserView):
 
             # Re-run the minimize structure to account for "fake" L3 categories
             categories = self.minimizeStructure(categories)
+
+            # Add store name categories as L0 (so to speak)
+            categories = self.addStoreNameCategories(categories)
 
             # Set the API 'categories' attribute
             data['categories'] = categories
