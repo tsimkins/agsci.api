@@ -63,6 +63,8 @@ all_cap_re = re.compile('([a-z0-9])([A-Z])')
 
 class BaseView(BrowserView):
 
+    allow_false_values = (int, bool, Decimal)
+
     pretty_xml = False
 
     implements(IPublishTraverse)
@@ -544,7 +546,7 @@ class BaseView(BrowserView):
                 if k not in required_fields:
 
                     # If it's not a int or boolean value, and an empty value, delete it.
-                    if not isinstance(data[k], (int, bool)) and not data[k]:
+                    if not isinstance(data[k], self.allow_false_values) and not data[k]:
                         del data[k]
 
         return data
@@ -1109,7 +1111,7 @@ class BaseView(BrowserView):
                 v = v.raw
 
             # Handle values, if they exist
-            if v:
+            if v or isinstance(v, self.allow_false_values):
 
                 # Filter out blank list items
                 if isinstance(v, (list, tuple,)):
