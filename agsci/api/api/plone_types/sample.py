@@ -354,6 +354,18 @@ class SampleAPIView(PloneSiteView):
         # Add a dummy "contents" field
         sample_data['contents'] = [self.placeholder]
 
+        # Categories
+        sample_data['categories'] = [
+            [
+                self.placeholder,
+                self.placeholder,
+                self.placeholder
+            ]
+        ]
+
+        # Event When Custom (for Cvent integrationonly)
+        sample_data['event_when_custom'] = [self.placeholder,]
+
         # Initialize contents structure
         data['contents'] = [sample_data,]
 
