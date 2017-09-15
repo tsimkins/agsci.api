@@ -63,7 +63,7 @@ all_cap_re = re.compile('([a-z0-9])([A-Z])')
 
 class BaseView(BrowserView):
 
-    allow_false_values = (int, bool, Decimal)
+    allow_false_values = (int, bool, Decimal, float)
 
     pretty_xml = False
 
@@ -501,6 +501,11 @@ class BaseView(BrowserView):
                 if k in ['latitude', 'longitude']:
                     data[k] = '%0.8f' % v
                 else:
+                    data[k] = '%0.2f' % v
+
+            # Convert float to string for price
+            elif isinstance(v, float):
+                if k in ['price']:
                     data[k] = '%0.2f' % v
 
             # XML type logic sees `zope.i18nmessageid.message.Message` as a list
