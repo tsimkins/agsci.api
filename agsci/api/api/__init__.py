@@ -370,12 +370,12 @@ class BaseView(BrowserView):
             'atlas_category_level_1',
             'atlas_category_level_2',
             'atlas_category_level_3',
+            'category_level1',
+            'category_level2',
+            'category_level3',
             'category_level_1',
             'category_level_2',
             'category_level_3',
-            'atlas_curriculum',
-            'atlas_program_team',
-            'atlas_state_extension_team',
             'content_error_codes',
             'content_issues',
             'registration_fieldsets',
@@ -397,13 +397,17 @@ class BaseView(BrowserView):
 
         if self.isChildProduct() or not self.isProduct():
 
-            # Product attributes and Team/category info
+            # Exclude Team and Category fields
             for _ in (
-                IAtlasProductAttributeMetadata,
                 IAtlasEPASMetadata,
                 IAtlasProductCategoryMetadata
             ):
                 exclude_fields.extend(getAllSchemaFields(_))
+
+            # Exclude Product Attributes, if not sample view.  For some reason,
+            # the sample view is missing these fields if we exclude them here.
+            if not self.show_all_fields:
+                exclude_fields.extend(getAllSchemaFields(IAtlasProductAttributeMetadata))
 
         # Getting all formats for excluded fields
         for i in exclude_fields:
