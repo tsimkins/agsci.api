@@ -30,15 +30,19 @@ import urllib2
 import urlparse
 import xml.dom.minidom
 
-from agsci.atlas.content.behaviors import IShadowProduct, ISubProduct, \
-                                          IAdditionalCategories
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, \
                                   getBaseSchema, execute_under_special_role
 
 # Custom Atlas Schemas
 from agsci.atlas.content import atlas_schemas, IAtlasProduct
-from agsci.atlas.content.behaviors import IAtlasInternalMetadata, \
-     IAtlasProductCategoryMetadata, IAtlasProductAttributeMetadata
+
+from agsci.atlas.content.behaviors import IShadowProduct, ISubProduct, \
+                                          IAdditionalCategories, \
+                                          IAtlasProductAttributeMetadata, \
+                                          IAtlasEPASMetadata, \
+                                          IAtlasProductCategoryMetadata, \
+                                          IAtlasInternalMetadata
+
 from agsci.atlas.content.event.cvent import ICventEvent
 from agsci.atlas.content.publication import IPublication
 from agsci.atlas.constants import DELIMITER, V_CS, INTERNAL_STORE_CATEGORY_LEVEL_1, \
@@ -393,22 +397,24 @@ class BaseView(BrowserView):
 
         if self.isChildProduct() or not self.isProduct():
 
-            # Team/category info
-            exclude_fields.extend([
-                    'program_team',
-                    'state_extension_team',
-                    'curriculum',
-                    'category_level1',
-                    'category_level2',
-                    'category_level3',
-                ]
-            )
+            # Product attributes and Team/category info
+            for _ in (
+                IAtlasProductAttributeMetadata,
+                IAtlasEPASMetadata,
+                IAtlasProductCategoryMetadata
+            ):
+                exclude_fields.extend(getAllSchemaFields(_))
 
+        # Getting all formats for excluded fields
         for i in exclude_fields:
-            _i = self.format_key(i)
 
-            if data.has_key(_i):
-                del data[_i]
+            for _i in [
+                self.format_key(i),
+                self.rename_key(self.format_key(i))
+            ]:
+
+                if data.has_key(_i):
+                    del data[_i]
 
         return data
 
