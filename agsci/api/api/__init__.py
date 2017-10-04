@@ -1,4 +1,3 @@
-from Acquisition import aq_base
 from BeautifulSoup import BeautifulSoup
 from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
@@ -31,7 +30,8 @@ import urlparse
 import xml.dom.minidom
 
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, \
-                                  getBaseSchema, execute_under_special_role
+                                  getBaseSchema, execute_under_special_role, \
+                                  getBodyHTML
 
 # Custom Atlas Schemas
 from agsci.atlas.content import atlas_schemas, IAtlasProduct
@@ -972,8 +972,11 @@ class BaseView(BrowserView):
                     del data[k]
 
         # Body text
-        if hasattr(aq_base(self.context), 'text') and hasattr(aq_base(self.context).text, 'raw'):
-            data['description'] = self.context.text.raw
+        body_html = getBodyHTML(self.context)
+
+        if body_html:
+            data['description'] = body_html
+
 
         # Delete explicitly delete
         data = self.clearDeletedValues(data)
