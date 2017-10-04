@@ -363,6 +363,13 @@ class SampleAPIView(PloneSiteView):
             ]
         ]
 
+        # Delete individual category level items, which come through only in
+        # the sample for some reason
+        for i in range(1,4):
+            k = 'category_level%d' % i
+            if sample_data.has_key(k):
+                del sample_data[k]
+
         # Event When Custom (for Cvent integrationonly)
         sample_data['event_when_custom'] = [self.placeholder,]
 
