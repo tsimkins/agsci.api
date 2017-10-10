@@ -922,11 +922,14 @@ class BaseView(BrowserView):
 
                     (img_mimetype, img_data) = encode_blob(img_field, self.showBinaryData)
 
+                    leadimage_adapted = LeadImage(self.context)
+
                     if img_data:
                         data['leadimage'] = {
                             'data' : img_data,
                             'mimetype' : img_mimetype,
-                            'caption' : LeadImage(self.context).leadimage_caption,
+                            'caption' : leadimage_adapted.leadimage_caption,
+                            'show' : leadimage_adapted.leadimage_show,
                         }
 
                 # File Field
