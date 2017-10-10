@@ -925,11 +925,13 @@ class BaseView(BrowserView):
                     leadimage_adapted = LeadImage(self.context)
 
                     if img_data:
+
+                        data['include_lead_image'] = leadimage_adapted.leadimage_show
+
                         data['leadimage'] = {
                             'data' : img_data,
                             'mimetype' : img_mimetype,
                             'caption' : leadimage_adapted.leadimage_caption,
-                            'show' : leadimage_adapted.leadimage_show,
                         }
 
                 # File Field
