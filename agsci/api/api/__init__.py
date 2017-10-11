@@ -46,7 +46,7 @@ from agsci.atlas.content.behaviors import IShadowProduct, ISubProduct, \
 from agsci.atlas.content.event.cvent import ICventEvent
 from agsci.atlas.content.publication import IPublication
 from agsci.atlas.constants import DELIMITER, V_CS, INTERNAL_STORE_CATEGORY_LEVEL_1, \
-                                  INTERNAL_STORE_NAME, EXTERNAL_STORE_NAME
+                                  INTERNAL_STORE_NAME, EXTERNAL_STORE_NAME, ALLOW_FALSE_VALUES
 
 from ..interfaces import IAPIDataAdapter
 
@@ -67,7 +67,7 @@ all_cap_re = re.compile('([a-z0-9])([A-Z])')
 
 class BaseView(BrowserView):
 
-    allow_false_values = (int, bool, Decimal, float)
+    allow_false_values = ALLOW_FALSE_VALUES
 
     pretty_xml = False
 
