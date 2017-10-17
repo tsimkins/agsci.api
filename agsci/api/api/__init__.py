@@ -44,6 +44,7 @@ from agsci.atlas.content.behaviors import IShadowProduct, ISubProduct, \
                                           IAtlasInternalMetadata
 
 from agsci.atlas.content.event.cvent import ICventEvent
+from agsci.atlas.content.event.group import IEventGroup
 from agsci.atlas.content.publication import IPublication
 from agsci.atlas.constants import DELIMITER, V_CS, INTERNAL_STORE_CATEGORY_LEVEL_1, \
                                   INTERNAL_STORE_NAME, EXTERNAL_STORE_NAME, ALLOW_FALSE_VALUES
@@ -550,6 +551,10 @@ class BaseView(BrowserView):
 
             # Listing of required fields
             required_fields = ['Title', 'available_to_public']
+
+            # Event Groups require 'county', even if it's blank
+            if IEventGroup.providedBy(self.context):
+                required_fields.append('county')
 
             # Normalize
             required_fields = [self.format_key(x) for x in required_fields]
