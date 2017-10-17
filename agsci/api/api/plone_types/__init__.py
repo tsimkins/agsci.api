@@ -1,5 +1,6 @@
 from .. import BaseView
 from agsci.atlas.utilities import toISO
+from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
 
 class PloneSiteView(BaseView):
@@ -54,6 +55,10 @@ class PloneSiteView(BaseView):
             query = {
                         'object_provides' : self.product_interfaces,
                         'modified' : modified,
+                        'effective' : {
+                            'query' : DateTime(),
+                            'range' : 'max',
+                        },
                         'review_state' : ['published', 'expired'],
                     }
 
