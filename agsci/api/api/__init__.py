@@ -677,6 +677,7 @@ class BaseView(BrowserView):
             'Webinar' : 'Webinar',
             'Webinar Group' : 'Webinar',
             'Workshop' : 'Workshop Simple',
+            'Workshop (External)' : 'Workshop Simple',
             'Workshop Group' : 'Workshop Complex'
         }
 
@@ -700,6 +701,7 @@ class BaseView(BrowserView):
             'Webinar' : 'Webinars',
             'Webinar Group' : 'Webinars',
             'Workshop' : 'Workshops',
+            'Workshop (External)' : 'Workshops',
             'Workshop Group' : 'Workshops'
         }
 
@@ -724,6 +726,7 @@ class BaseView(BrowserView):
             'Webinar' : 'Webinar',
             'Webinar Group' : 'Webinar Group',
             'Workshop' : 'Workshop',
+            'Workshop (External)' : 'Workshop',
             'Workshop Group' : 'Workshop Group'
         }
 
