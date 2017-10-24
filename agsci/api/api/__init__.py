@@ -44,6 +44,7 @@ from agsci.atlas.content.behaviors import IShadowProduct, ISubProduct, \
                                           IAtlasInternalMetadata
 
 from agsci.atlas.content.event.cvent import ICventEvent
+from agsci.atlas.content.event.external import IExternalEvent
 from agsci.atlas.content.event.group import IEventGroup
 from agsci.atlas.content.publication import IPublication
 from agsci.atlas.constants import DELIMITER, V_CS, INTERNAL_STORE_CATEGORY_LEVEL_1, \
@@ -677,7 +678,6 @@ class BaseView(BrowserView):
             'Webinar' : 'Webinar',
             'Webinar Group' : 'Webinar',
             'Workshop' : 'Workshop Simple',
-            'Workshop (External)' : 'Workshop Simple',
             'Workshop Group' : 'Workshop Complex'
         }
 
@@ -701,7 +701,6 @@ class BaseView(BrowserView):
             'Webinar' : 'Webinars',
             'Webinar Group' : 'Webinars',
             'Workshop' : 'Workshops',
-            'Workshop (External)' : 'Workshops',
             'Workshop Group' : 'Workshops'
         }
 
@@ -713,6 +712,7 @@ class BaseView(BrowserView):
             'Conference Group' : 'Conference Group',
             'Curriculum' : 'Curriculum',
             'Cvent Event' : 'Cvent Event',
+            'External Event' : 'External Event',
             'Learn Now Video' : 'Video',
             'News Item' : 'News',
             'Online Course' : 'Online Course',
@@ -726,7 +726,6 @@ class BaseView(BrowserView):
             'Webinar' : 'Webinar',
             'Webinar Group' : 'Webinar Group',
             'Workshop' : 'Workshop',
-            'Workshop (External)' : 'Workshop',
             'Workshop Group' : 'Workshop Group'
         }
 
@@ -746,6 +745,11 @@ class BaseView(BrowserView):
                 'education_format' : 'Conferences',
             },
         }
+
+        # One-off for External events.  Event Type (manually set) to
+        # `attribute_set` and `education_format`
+        # This is just a copy of the Cvent mapping for now
+        external_event_type_mapping = dict(cvent_event_type_mapping)
 
         # Get the `product_type` value from the input data
         plone_product_type = data.get('plone_product_type', None)
@@ -778,6 +782,16 @@ class BaseView(BrowserView):
 
                 # Update data fields
                 _data.update(cvent_event_type_mapping.get(event_type, {}))
+
+            # Calculate/update fields if we're a Cvent event
+            if IExternalEvent.providedBy(self.context):
+
+                # Calculate `attribute_set` and `education_format`
+                # based on the Event Type attribute of the Cvent event
+                event_type = getattr(self.context, 'atlas_event_type', 'Workshop')
+
+                # Update data fields
+                _data.update(external_event_type_mapping.get(event_type, {}))
 
             # Set `product_platform` if we're a Publication
             elif IPublication.providedBy(self.context):
