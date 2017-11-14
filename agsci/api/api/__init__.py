@@ -923,7 +923,7 @@ class BaseView(BrowserView):
             # Populate Updated EPAS Structure Information if none was set
             # through an adapter.
             if not data.has_key('epas'):
-                epas_structure_keys = ['epas_program_team', 'epas_topic', 'epas_subtopic']
+                epas_structure_keys = ['epas_team', 'epas_topic', 'epas_subtopic']
 
                 epas_structure = []
 
