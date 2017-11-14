@@ -603,7 +603,7 @@ class BaseView(BrowserView):
     #
     # Not sure if this is required?
     #
-    def minimizeStructure(self, c, keys=[]):
+    def minimizeStructure(self, c, keys=[], prefix=None):
         if c:
             lengths = map(lambda x:len(x), c)
             min_items =  min(lengths)
@@ -621,6 +621,9 @@ class BaseView(BrowserView):
         # with the key name as the key, and the positional item in the list as
         # a value.
         if keys:
+
+            if prefix:
+                keys = [x.replace(prefix, '') for x in keys]
 
             def toDict(x):
                 return dict(zip(keys, x))
@@ -916,6 +919,27 @@ class BaseView(BrowserView):
                 if extension_structure:
                     data['extension_structure'] = \
                         self.minimizeStructure(extension_structure, keys=extension_structure_keys)
+
+            # Populate Updated EPAS Structure Information if none was set
+            # through an adapter.
+            if not data.has_key('epas'):
+                epas_structure_keys = ['epas_program_team', 'epas_topic', 'epas_subtopic']
+
+                epas_structure = []
+
+                for i in epas_structure_keys:
+                    j = data.get(i, [])
+
+                    if j:
+                        for k in j:
+                            epas_structure.append(tuple(k.split(DELIMITER)))
+
+                        if data.has_key(i):
+                            del data[i]
+
+                if epas_structure:
+                    data['epas'] = \
+                        self.minimizeStructure(epas_structure, keys=epas_structure_keys, prefix="epas_")
 
             # Populate people information
 
