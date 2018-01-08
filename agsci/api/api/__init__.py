@@ -680,7 +680,7 @@ class BaseView(BrowserView):
 
         # Education format mapping (for filter in Magento)
         education_format_mapping = {
-            'App' : 'Downloadable',
+            'App' : 'Tools and Apps',
             'Article' : 'Articles',
             'Conference' : 'Conferences',
             'Conference Group' : 'Conferences',
@@ -694,7 +694,7 @@ class BaseView(BrowserView):
             'Publication Print' : 'Guides and Publications',
             'Publication Digital' : 'Guides and Publications',
             'Publication Bundle' : 'Guides and Publications',
-            'Smart Sheet' : 'Downloadable',
+            'Smart Sheet' : 'Tools and Apps',
             'Webinar' : 'Webinars',
             'Webinar Group' : 'Webinars',
             'Workshop' : 'Workshops',
