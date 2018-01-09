@@ -426,7 +426,10 @@ class BaseView(BrowserView):
         # Ensure keys from catalog indexes/metadata are non-camel case lowercase
         for k in data.keys():
             _k = self.format_key(k)
-            _k = self.rename_key(_k)
+
+            # Rename key if it's not an explicit DELETE_VALUE
+            if not isinstance(data[k], DeleteValue):
+                _k = self.rename_key(_k)
 
             if k != _k:
                 data[_k] = data[k]
@@ -996,10 +999,11 @@ class BaseView(BrowserView):
                     del data[k]
 
         # Body text
-        body_html = getBodyHTML(self.context)
+        if not data.has_key('description'):
+            body_html = getBodyHTML(self.context)
 
-        if body_html:
-            data['description'] = body_html
+            if body_html:
+                data['description'] = body_html
 
 
         # Delete explicitly delete
