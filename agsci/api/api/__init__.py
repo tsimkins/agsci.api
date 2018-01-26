@@ -1072,6 +1072,10 @@ class BaseView(BrowserView):
             # http://stackoverflow.com/questions/749796/pretty-printing-xml-in-python
             return xml.dom.minidom.parseString(xml_string).toprettyxml()
 
+    @property
+    def filename(self):
+        return '%s.tsv' % self.__name__
+
     def getTSV(self):
         return 'TSV Not Implemented' #NOOP
 
@@ -1097,6 +1101,9 @@ class BaseView(BrowserView):
         elif data_format == 'tsv':
             tsv = self.getTSV()
             self.request.response.setHeader('Content-Type', 'text/tab-separated-values')
+            self.request.response.setHeader(
+                'Content-Disposition',
+                'attachment; filename="%s"' % self.filename)
             return tsv
 
     # Handle HEAD request so testing the connection in Jitterbit doesn't fail
