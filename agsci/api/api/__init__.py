@@ -76,7 +76,7 @@ class BaseView(BrowserView):
     implements(IPublishTraverse)
 
     data_format = None
-    valid_data_formats = ['json', 'xml']
+    valid_data_formats = ['json', 'xml', 'tsv']
     default_data_format = 'xml'
 
     show_all_fields = False
@@ -1072,6 +1072,9 @@ class BaseView(BrowserView):
             # http://stackoverflow.com/questions/749796/pretty-printing-xml-in-python
             return xml.dom.minidom.parseString(xml_string).toprettyxml()
 
+    def getTSV(self):
+        return 'TSV Not Implemented' #NOOP
+
     def __call__(self):
 
         data_format = self.getDataFormat()
@@ -1090,6 +1093,11 @@ class BaseView(BrowserView):
             xml = self.getXML()
             self.request.response.setHeader('Content-Type', 'application/xml')
             return xml
+
+        elif data_format == 'tsv':
+            tsv = self.getTSV()
+            self.request.response.setHeader('Content-Type', 'text/tab-separated-values')
+            return tsv
 
     # Handle HEAD request so testing the connection in Jitterbit doesn't fail
     # From plone.namedfile.scaling
