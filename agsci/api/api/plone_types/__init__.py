@@ -92,7 +92,7 @@ class PloneSiteView(BaseView):
                 api_view = o.restrictedTraverse('@@api')
 
                 # Append the data for this object
-                data["contents"].append(api_view.getData())
+                data["contents"].append(api_view.data)
 
                 # Extend contents with shadow products
                 data["contents"].extend(api_view.getShadowData())
