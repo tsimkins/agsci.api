@@ -84,6 +84,9 @@ class BaseView(BrowserView):
     # Enable caching for this view
     cache = True
 
+    # Enable expensive adapters
+    expensive = True
+
     # Default window for listing updated items
     default_updated = 3600
 
@@ -1080,6 +1083,10 @@ class BaseView(BrowserView):
         return 'TSV Not Implemented' #NOOP
 
     def __call__(self):
+
+        # If we didn't get a value passed in for 'expensive', set it to the view default.
+        if not self.request.form.has_key('expensive'):
+            self.request.form['expensive'] = '%r' % self.expensive
 
         data_format = self.getDataFormat()
 

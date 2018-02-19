@@ -8,6 +8,9 @@ class PloneSiteView(BaseView):
     # Don't cache API views for the Plone site
     cache = False
 
+    # Don't run 'expensive' adapters
+    expensive = False
+
     # Listing of interfaces that products provide
     product_interfaces = [
                             'agsci.atlas.content.IAtlasProduct',
