@@ -81,6 +81,9 @@ class BaseView(BrowserView):
 
     show_all_fields = False
 
+    # Show these fields even if blank
+    default_required_fields = ['Title', 'available_to_public', 'registration_deadline']
+
     # Enable caching for this view
     cache = True
 
@@ -551,23 +554,28 @@ class BaseView(BrowserView):
 
         return data
 
+    # Fields that are required to be in the API output, even with a NULL vlaue
+    @property
+    def required_fields(self):
+
+        v = list(self.default_required_fields)
+
+        # Event Groups require 'county', even if it's blank
+        if IEventGroup.providedBy(self.context):
+            v.append('county')
+
+        # Normalize
+        v = [self.format_key(x) for x in v]
+
+        return v
+
     def remove_empty_nonrequired_fields(self, data):
 
         # Bypass this if show_all_fields is True
         if not self.show_all_fields:
 
-            # Listing of required fields
-            required_fields = ['Title', 'available_to_public']
-
-            # Event Groups require 'county', even if it's blank
-            if IEventGroup.providedBy(self.context):
-                required_fields.append('county')
-
-            # Normalize
-            required_fields = [self.format_key(x) for x in required_fields]
-
             for k in data.keys():
-                if k not in required_fields:
+                if k not in self.required_fields:
 
                     # If it's not a int or boolean value, and an empty value, delete it.
                     if not isinstance(data[k], self.allow_false_values) and not data[k]:
