@@ -63,6 +63,14 @@
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
+    <browser:page
+        for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+        name="invalid-magento-url-keys"
+        class=".plone_types.magento.InvalidMagentoURLKeysView"
+        permission="zope.Public"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
+        />
+
     <!-- Dexterity Image -->
 
     <browser:page
