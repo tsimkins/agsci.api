@@ -2,13 +2,15 @@ from . import PloneSiteView
 from agsci.atlas.cron.jobs.magento import MagentoJob
 from agsci.atlas.utilities import ploneify
 
-class InvalidMagentoURLKeysView(PloneSiteView):
+class MagentoView(PloneSiteView):
 
     default_data_format = 'json'
 
     @property
     def magento_data(self):
         return MagentoJob(self.context)
+
+class InvalidMagentoURLKeysView(MagentoView):
 
     def get_product_url(self, product):
 
@@ -117,4 +119,47 @@ class InvalidMagentoURLKeysView(PloneSiteView):
                     # Append product record with updated data to output
                     data.append(_)
 
+        return data
+
+class OriginalPloneIdsView(MagentoView):
+
+    types = [
+        u'Webinar Group',
+        u'Publication',
+        u'Smart Sheet',
+        u'App',
+        u'Workshop Group',
+        u'Conference Group',
+        u'Learn Now Video',
+        u'Article',
+        u'News Item',
+        u'Person'
+    ]
+
+    def getData(self, **kwargs):
+
+        data = []
+
+        results = self.portal_catalog.searchResults({
+            'object_provides' : [
+                'agsci.atlas.content.IAtlasProduct',
+                'agsci.person.content.person.IPerson'
+            ],
+            'Type' : self.types
+        })
+
+        for r in results:
+
+            if r.review_state in ['expired',]:
+                continue
+
+            plone_ids = r.OriginalPloneIds
+            magento_url = r.MagentoURL
+
+            if plone_ids and magento_url:
+
+                for i in plone_ids:
+                    data.append({'plone_id' : i, 'target' : '/%s' % magento_url})
+
+        data.sort(key=lambda x: x.get('target'))
         return data

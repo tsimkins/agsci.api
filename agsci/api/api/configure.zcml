@@ -71,6 +71,14 @@
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
+    <browser:page
+        for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+        name="original-plone-ids"
+        class=".plone_types.magento.OriginalPloneIdsView"
+        permission="zope.Public"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
+        />
+
     <!-- Dexterity Image -->
 
     <browser:page
