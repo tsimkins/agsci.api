@@ -52,7 +52,7 @@ class InvalidMagentoURLKeysView(PloneSiteView):
 
             # Can we fix the URL with a redirect (this determines if it's a
             # product-level or product-grid fix)
-            _redirect = True
+            _edit_product = True
 
             # Skip people
             if r.Type in ['Person']:
@@ -67,11 +67,11 @@ class InvalidMagentoURLKeysView(PloneSiteView):
 
             # We can't redirect items without descriptions
             if not r.Description:
-                _redirect = False
+                _edit_product = False
 
             # If we're an Article, but don't have any children, we can't redirect
             if r.Type in ['Article',] and not o.objectIds():
-                _redirect = False
+                _edit_product = False
 
             # Get the Magento product data
             magento_product = magento_data.by_plone_id(r.UID)
@@ -92,14 +92,14 @@ class InvalidMagentoURLKeysView(PloneSiteView):
                     _ = dict(magento_product) # Copy
                     _['set_url'] = set_magento_url
 
-                    # Append product record with updated data to output
-                    data.append(_)
-
                     # Do we have a Magento product with that URL already?
                     duplicate = magento_data.by_magento_url(set_magento_url)
 
                     # If we have an duplicate product, add some debug info
                     if duplicate:
+
+                        # Can't simply edit
+                        _edit_product = False
 
                         # Copy the item so we can append to the output
                         _duplicate = dict(duplicate)
@@ -110,5 +110,11 @@ class InvalidMagentoURLKeysView(PloneSiteView):
                         # Append the duplicate record if they're not the same
                         if _duplicate['set_url'] != _duplicate['magento_url']:
                             data.append(_duplicate)
+
+                    # Set the value for editing the product
+                    _['edit_product'] = _edit_product
+
+                    # Append product record with updated data to output
+                    data.append(_)
 
         return data
