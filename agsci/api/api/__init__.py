@@ -470,6 +470,8 @@ class BaseView(BrowserView):
             ('phone_number', 'phone'),
             ('fax_number', 'fax'),
             ('bio', 'description'),
+            ('html', 'description'), # Can't set description directly because it gets
+                                     # updated to short_description
             ('job_titles', 'person_job_titles'),
             ('classifications', 'person_classification'),
             ('areas_expertise', 'expertise'),
