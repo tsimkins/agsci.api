@@ -15,26 +15,6 @@
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
-    <!-- Event Group View (use standard BaseView) -->
-
-    <browser:page
-        for="agsci.atlas.content.event.group.IEventGroup"
-        name="api"
-        class=".BaseView"
-        permission="zope.Public"
-        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
-        />
-
-    <!-- Online Course Group View (use standard BaseView) -->
-
-    <browser:page
-        for="agsci.atlas.content.online_course.group.IOnlineCourseGroup"
-        name="api"
-        class=".BaseView"
-        permission="zope.Public"
-        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
-        />
-
     <!-- Container View -->
 
     <browser:page
