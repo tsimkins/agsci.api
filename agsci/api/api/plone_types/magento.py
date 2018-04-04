@@ -93,6 +93,7 @@ class InvalidMagentoURLKeysView(MagentoView):
                     # Value for product record
                     _ = dict(magento_product) # Copy
                     _['set_url'] = set_magento_url
+                    _['plone_url'] = r.getURL().replace('http://', 'https://')
 
                     # Do we have a Magento product with that URL already?
                     duplicate = magento_data.by_magento_url(set_magento_url)
