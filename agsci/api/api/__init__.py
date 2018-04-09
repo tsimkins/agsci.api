@@ -3,6 +3,7 @@ from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
+from plone.app.textfield.value import RichTextValue
 from plone.namedfile.file import NamedBlobFile
 from agsci.leadimage.content.behaviors import LeadImage
 from collections import OrderedDict
@@ -551,6 +552,10 @@ class BaseView(BrowserView):
             # If it's a dict, run this routine on that dict.
             elif isinstance(v, dict):
                 data[k] = self.fix_value_datatypes(data[k])
+
+            # If it's rich text, convert to HTML.
+            elif isinstance(v, RichTextValue):
+                data[k] = v.output
 
         return data
 
