@@ -29,6 +29,7 @@ class SampleAPIView(PloneSiteView):
     show_all_fields = True
     debug = False
     pretty_xml = True
+    expensive = True
 
     # Merge values with existing values, preferring more complex data types
     def updateValues(self, data, new_data):
