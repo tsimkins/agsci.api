@@ -51,6 +51,8 @@ from agsci.atlas.content.publication import IPublication
 from agsci.atlas.constants import DELIMITER, V_CS, INTERNAL_STORE_CATEGORY_LEVEL_1, \
                                   INTERNAL_STORE_NAME, EXTERNAL_STORE_NAME, ALLOW_FALSE_VALUES
 
+from agsci.atlas.interfaces import IProductContentsAdapter
+
 from ..interfaces import IAPIDataAdapter
 
 # Explicit delete value
@@ -469,6 +471,8 @@ class BaseView(BrowserView):
             ('phone_number', 'phone'),
             ('fax_number', 'fax'),
             ('bio', 'description'),
+            ('html', 'description'), # Can't set description directly because it gets
+                                     # updated to short_description
             ('job_titles', 'person_job_titles'),
             ('classifications', 'person_classification'),
             ('areas_expertise', 'expertise'),
@@ -680,7 +684,9 @@ class BaseView(BrowserView):
             'Article' : 'Article',
             'Conference' : 'Workshop Complex',
             'Conference Group' : 'Workshop Complex',
-            'Curriculum' : 'Curriculum',
+            'Curriculum Group' : 'Curriculum',
+            'Curriculum (Simple)' : 'Curriculum',
+            'Curriculum (Digital)' : 'Curriculum',
             'Learn Now Video' : 'Video Free',
             'News Item' : 'News',
             'Online Course' : 'Online Course',
@@ -703,7 +709,9 @@ class BaseView(BrowserView):
             'Article' : 'Articles',
             'Conference' : 'Conferences',
             'Conference Group' : 'Conferences',
-            'Curriculum' : 'Curricula',
+            'Curriculum Group' : 'Curricula',
+            'Curriculum (Simple)' : 'Curricula',
+            'Curriculum (Digital)' : 'Curricula',
             'Learn Now Video' : 'Videos',
             'News Item' : 'News',
             'Online Course' : 'Online Courses',
@@ -1452,7 +1460,7 @@ class BaseView(BrowserView):
 class BaseContainerView(BaseView):
 
     def getContents(self):
-        return self.context.listFolderContents()
+        return IProductContentsAdapter(self.context).getContents()
 
     def getData(self, subproduct=True, **kwargs):
         data = super(BaseContainerView, self).getData(subproduct=subproduct)
