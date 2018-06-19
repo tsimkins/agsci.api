@@ -523,6 +523,9 @@ class BaseView(BrowserView):
             elif isinstance(v, Decimal):
                 if k in ['latitude', 'longitude']:
                     data[k] = '%0.8f' % v
+                # Percent allocated for a person's time
+                elif k in ['percent_allocated',]:
+                    data[k] = float(v)
                 else:
                     data[k] = '%0.2f' % v
 
