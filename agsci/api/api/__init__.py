@@ -551,11 +551,11 @@ class BaseView(BrowserView):
 
                 for i in range(0, len(v)):
                     if isinstance(v[i], dict):
-                        v[i] = self.fix_value_datatypes(v[i])
+                        v[i] = self.fix_value_datatypes(dict(v[i]))
 
             # If it's a dict, run this routine on that dict.
             elif isinstance(v, dict):
-                data[k] = self.fix_value_datatypes(data[k])
+                data[k] = self.fix_value_datatypes(dict(data[k]))
 
             # If it's rich text, convert to HTML.
             elif isinstance(v, RichTextValue):
