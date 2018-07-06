@@ -401,6 +401,7 @@ class BaseView(BrowserView):
             'educational_drivers',
             'homepage_feature',
             'homepage_topics',
+            'content_owner_modified',
         ]
 
         if self.isChildProduct() or not self.isProduct():
