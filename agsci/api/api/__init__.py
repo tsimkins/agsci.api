@@ -666,11 +666,13 @@ class BaseView(BrowserView):
 
             _ = list(_)
 
-            if _[0] == INTERNAL_STORE_CATEGORY_LEVEL_1:
-                _.insert(0, INTERNAL_STORE_NAME)
+            if _[0] not in (INTERNAL_STORE_NAME, EXTERNAL_STORE_NAME):
 
-            elif _:
-                _.insert(0, EXTERNAL_STORE_NAME)
+                if _[0] == INTERNAL_STORE_CATEGORY_LEVEL_1:
+                    _.insert(0, INTERNAL_STORE_NAME)
+
+                elif _:
+                    _.insert(0, EXTERNAL_STORE_NAME)
 
             rv.append(tuple(_))
 
