@@ -32,7 +32,7 @@ import xml.dom.minidom
 
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, \
                                   getBaseSchema, execute_under_special_role, \
-                                  getBodyHTML
+                                  getBodyHTML, get_internal_store_categories
 
 # Custom Atlas Schemas
 from agsci.atlas.content import atlas_schemas, IAtlasProduct
@@ -656,9 +656,16 @@ class BaseView(BrowserView):
 
         return c
 
+    # Returns a list of the 'internal' store categories
+    @property
+    def internal_store_categories(self):
+        return get_internal_store_categories()
+
     # Adds the appropriate "fake" internal or external store categories before each
     # "real" category
     def addStoreNameCategories(self, c):
+
+        internal_store_categories = self.internal_store_categories
 
         rv = []
 
@@ -668,7 +675,7 @@ class BaseView(BrowserView):
 
             if _[0] not in (INTERNAL_STORE_NAME, EXTERNAL_STORE_NAME):
 
-                if _[0] == INTERNAL_STORE_CATEGORY_LEVEL_1:
+                if _[0] in internal_store_categories:
                     _.insert(0, INTERNAL_STORE_NAME)
 
                 elif _:
