@@ -400,6 +400,8 @@ class BaseView(BrowserView):
             'homepage_feature',
             'homepage_topics',
             'content_owner_modified',
+            'pdf_updated_year',
+            'internal_store_category',
         ]
 
         if self.isChildProduct() or not self.isProduct():
