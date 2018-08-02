@@ -971,7 +971,7 @@ class BaseView(BrowserView):
                 for i in epas_structure_keys:
                     j = data.get(i, [])
 
-                    if j:
+                    if j and not isinstance(j, DeleteValue):
                         for k in j:
                             epas_structure.append(tuple(k.split(DELIMITER)))
 
