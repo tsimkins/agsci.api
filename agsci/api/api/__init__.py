@@ -985,6 +985,11 @@ class BaseView(BrowserView):
                     data['epas'] = \
                         self.minimizeStructure(epas_structure, keys=epas_structure_keys, prefix="epas_")
 
+            # Remove EPAS stuff for Kate's testing
+            for i in ('epas', 'extension_structure'):
+                if data.has_key(i):
+                    del data[i]
+
             # Populate people information
 
             # Assign primary contact id to first id in owners
