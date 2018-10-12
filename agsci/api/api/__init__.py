@@ -404,6 +404,9 @@ class BaseView(BrowserView):
             'content_owner_modified',
             'pdf_updated_year',
             'internal_store_category',
+            'formatted_address',
+            'geocode_place_id',
+            'geocode_types',
         ]
 
         if self.isChildProduct() or not self.isProduct():
