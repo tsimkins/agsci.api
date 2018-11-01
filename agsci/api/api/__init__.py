@@ -407,6 +407,7 @@ class BaseView(BrowserView):
             'formatted_address',
             'geocode_place_id',
             'geocode_types',
+            'hide_from_sitemap',
         ]
 
         if self.isChildProduct() or not self.isProduct():
