@@ -206,7 +206,7 @@ class SampleAPIView(PloneSiteView):
         # Override for root folder (only structures)
         if root.portal_type == 'Folder':
             allowed_content_types = ['atlas_category_level_1', 'atlas_county',
-                                     'state_extension_team', 'directory']
+                                     'directory']
 
         if portal_type in allowed_content_types:
 
@@ -363,6 +363,15 @@ class SampleAPIView(PloneSiteView):
                 self.placeholder
             ]
         ]
+
+        # Primary EPAS Team
+        sample_data['epas_primary_team'] = {
+            'unit' : self.placeholder,
+            'team' : self.placeholder,
+        }
+
+        # Hide from sitemap
+        sample_data['am_hide_from_html_sitemap'] = self.placeholder
 
         # Delete individual category level items, which come through only in
         # the sample for some reason
