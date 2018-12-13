@@ -412,11 +412,16 @@ class BaseView(BrowserView):
 
         if self.isChildProduct() or not self.isProduct():
 
-            # Exclude Team and Category fields
-            for _ in (
-                IAtlasEPASMetadata,
-                IAtlasProductCategoryMetadata
-            ):
+            # List of Schemas to exclude.  Always exclude the L1/L2/L3 categories
+            # from non-child products and non-products
+            exclude_schemas = [IAtlasProductCategoryMetadata,]
+
+            # Exclude EPAS from non-products
+            if not self.isProduct():
+                exclude_schemas.append(IAtlasEPASMetadata)
+
+            # Append fields from these schemas
+            for _ in exclude_schemas:
                 exclude_fields.extend(getAllSchemaFields(_))
 
             # Exclude Product Attributes, if not sample view.  For some reason,
