@@ -715,6 +715,7 @@ class BaseView(BrowserView):
             'Curriculum (Simple)' : 'Curriculum',
             'Curriculum (Digital)' : 'Curriculum',
             'Learn Now Video' : 'Video Free',
+            'Learn Now Video Series' : 'Video Free',
             'News Item' : 'News',
             'Online Course' : 'Online Course',
             'Online Course Group' : 'Online Course',
@@ -740,6 +741,7 @@ class BaseView(BrowserView):
             'Curriculum (Simple)' : 'Tools and Apps',
             'Curriculum (Digital)' : 'Tools and Apps',
             'Learn Now Video' : 'Videos',
+            'Learn Now Video Series' : 'Videos',
             'News Item' : 'News',
             'Online Course' : 'Online Courses',
             'Online Course Group' : 'Online Courses',
@@ -755,7 +757,7 @@ class BaseView(BrowserView):
             'Workshop Group' : 'Workshops'
         }
 
-        # Mapping of Plone product type to integration produc type
+        # Mapping of Plone product type to integration product type
         product_type_mapping = {
             'App' : 'App',
             'Article' : 'Article',
@@ -764,6 +766,7 @@ class BaseView(BrowserView):
             'Cvent Event' : 'Cvent Event',
             'External Event' : 'External Event',
             'Learn Now Video' : 'Video',
+            'Learn Now Video Series' : 'Video Series',
             'News Item' : 'News',
             'Online Course' : 'Online Course',
             'Online Course Group' : 'Online Course Group',
