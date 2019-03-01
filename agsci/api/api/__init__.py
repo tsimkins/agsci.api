@@ -412,11 +412,16 @@ class BaseView(BrowserView):
 
         if self.isChildProduct() or not self.isProduct():
 
-            # Exclude Team and Category fields
-            for _ in (
-                IAtlasEPASMetadata,
-                IAtlasProductCategoryMetadata
-            ):
+            # List of Schemas to exclude.  Always exclude the L1/L2/L3 categories
+            # from non-child products and non-products
+            exclude_schemas = [IAtlasProductCategoryMetadata,]
+
+            # Exclude EPAS from non-products
+            if not self.isProduct():
+                exclude_schemas.append(IAtlasEPASMetadata)
+
+            # Append fields from these schemas
+            for _ in exclude_schemas:
                 exclude_fields.extend(getAllSchemaFields(_))
 
             # Exclude Product Attributes, if not sample view.  For some reason,
@@ -710,6 +715,7 @@ class BaseView(BrowserView):
             'Curriculum (Simple)' : 'Curriculum',
             'Curriculum (Digital)' : 'Curriculum',
             'Learn Now Video' : 'Video Free',
+            'Learn Now Video Series' : 'Video Free',
             'News Item' : 'News',
             'Online Course' : 'Online Course',
             'Online Course Group' : 'Online Course',
@@ -735,6 +741,7 @@ class BaseView(BrowserView):
             'Curriculum (Simple)' : 'Tools and Apps',
             'Curriculum (Digital)' : 'Tools and Apps',
             'Learn Now Video' : 'Videos',
+            'Learn Now Video Series' : 'Videos',
             'News Item' : 'News',
             'Online Course' : 'Online Courses',
             'Online Course Group' : 'Online Courses',
@@ -750,7 +757,7 @@ class BaseView(BrowserView):
             'Workshop Group' : 'Workshops'
         }
 
-        # Mapping of Plone product type to integration produc type
+        # Mapping of Plone product type to integration product type
         product_type_mapping = {
             'App' : 'App',
             'Article' : 'Article',
@@ -759,6 +766,7 @@ class BaseView(BrowserView):
             'Cvent Event' : 'Cvent Event',
             'External Event' : 'External Event',
             'Learn Now Video' : 'Video',
+            'Learn Now Video Series' : 'Video Series',
             'News Item' : 'News',
             'Online Course' : 'Online Course',
             'Online Course Group' : 'Online Course Group',
