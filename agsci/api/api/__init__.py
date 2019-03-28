@@ -51,7 +51,7 @@ from agsci.atlas.content.publication import IPublication
 from agsci.atlas.constants import DELIMITER, V_CS, INTERNAL_STORE_CATEGORY_LEVEL_1, \
                                   INTERNAL_STORE_NAME, EXTERNAL_STORE_NAME, ALLOW_FALSE_VALUES
 
-from agsci.atlas.interfaces import IProductContentsAdapter
+from agsci.atlas.interfaces import IProductContentsAdapter, IHiddenProductCategories
 
 from ..interfaces import IAPIDataAdapter
 
@@ -952,6 +952,8 @@ class BaseView(BrowserView):
             # Set the API 'categories' attribute if the product isn't hidden.
             if not self.isHiddenProduct:
                 data['categories'] = categories
+            else:
+                data['categories'] = self.hiddenProductCategories(categories)
 
             # Populate Extension Structure Information if none was set
             # through an adapter.
@@ -1336,6 +1338,26 @@ class BaseView(BrowserView):
                         data.append(ad)
 
         return data
+
+    # Get additional catgories via adapters
+    def hiddenProductCategories(self, categories=[]):
+
+        data = []
+
+        for (name, adapted) in getAdapters((self.context,), IHiddenProductCategories):
+            try:
+                # Pull the values, and update the API data
+                ad = adapted(categories=categories)
+            except AttributeError:
+                # If there's no '__call__()' method, skip
+                pass
+            else:
+                # Verify that we got a list/tuple back, and add those categories
+                # to the master list
+                if isinstance(ad, (list, tuple)) and ad:
+                    data.extend(ad)
+
+        return list(set(data))
 
     # Get additional catgories via adapters
     def additionalCategories(self, categories=[]):
