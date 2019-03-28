@@ -953,7 +953,9 @@ class BaseView(BrowserView):
             if not self.isHiddenProduct:
                 data['categories'] = categories
             else:
-                data['categories'] = self.hiddenProductCategories(categories)
+                data['categories'] = self.addStoreNameCategories(
+                    self.hiddenProductCategories()
+                )
 
             # Populate Extension Structure Information if none was set
             # through an adapter.
