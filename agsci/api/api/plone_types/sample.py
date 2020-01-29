@@ -29,7 +29,7 @@ class SampleAPIView(PloneSiteView):
     show_all_fields = True
     debug = False
     pretty_xml = True
-    expensive = True
+    expensive = False
 
     # Merge values with existing values, preferring more complex data types
     def updateValues(self, data, new_data):
@@ -380,7 +380,7 @@ class SampleAPIView(PloneSiteView):
             if sample_data.has_key(k):
                 del sample_data[k]
 
-        # Event When Custom (for Cvent integrationonly)
+        # Event When Custom (for Cvent integration only)
         sample_data['event_when_custom'] = [self.placeholder,]
 
         # Initialize contents structure
@@ -388,5 +388,9 @@ class SampleAPIView(PloneSiteView):
 
         # Store 'modified' query string in response data
         data['modified'] = self.placeholder
+
+        # Related SKUs
+        sample_data['related_skus'] = [self.placeholder,]
+        sample_data['secondary_related_skus'] = [self.placeholder,]
 
         return data
