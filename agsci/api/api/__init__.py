@@ -408,6 +408,9 @@ class BaseView(BrowserView):
             'geocode_place_id',
             'geocode_types',
             'hide_from_sitemap',
+            'curriculum',
+            'program_team',
+            'state_extension_team',
         ]
 
         if self.isChildProduct() or not self.isProduct():
