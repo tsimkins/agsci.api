@@ -957,26 +957,6 @@ class BaseView(BrowserView):
                     self.hiddenProductCategories()
                 )
 
-            # Populate Extension Structure Information if none was set
-            # through an adapter.
-            if not data.has_key('extension_structure'):
-                extension_structure_keys = ['state_extension_team', 'program_team', 'curriculum']
-
-                extension_structure = []
-
-                for i in extension_structure_keys:
-                    j = data.get(i, [])
-
-                    if j:
-                        for k in j:
-                            extension_structure.append(tuple(k.split(DELIMITER)))
-
-                        del data[i]
-
-                if extension_structure:
-                    data['extension_structure'] = \
-                        self.minimizeStructure(extension_structure, keys=extension_structure_keys)
-
             # Populate Updated EPAS Structure Information if none was set
             # through an adapter.
             if not data.has_key('epas'):
