@@ -430,7 +430,15 @@ class BaseView(BrowserView):
             # Exclude Product Attributes, if not sample view.  For some reason,
             # the sample view is missing these fields if we exclude them here.
             if not self.show_all_fields:
-                exclude_fields.extend(getAllSchemaFields(IAtlasProductAttributeMetadata))
+
+                _ = getAllSchemaFields(IAtlasProductAttributeMetadata)
+
+                # Allow language for child products
+                if self.isChildProduct():
+                    if 'atlas_language' in _:
+                        _.remove('atlas_language')
+
+                exclude_fields.extend(_)
 
         # Getting all formats for excluded fields
         for i in exclude_fields:
@@ -1084,7 +1092,7 @@ class BaseView(BrowserView):
     def orderKeys(self, data):
 
         if isinstance(data, dict):
-            print "It's a dict"
+
             for k in data.keys():
                 data[k] = self.orderKeys(data[k])
 
