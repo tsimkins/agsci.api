@@ -79,7 +79,7 @@ class BaseView(BrowserView):
     implements(IPublishTraverse)
 
     data_format = None
-    valid_data_formats = ['json', 'xml', 'tsv']
+    valid_data_formats = ['json', 'xml', 'csv']
     default_data_format = 'xml'
 
     show_all_fields = False
@@ -1144,10 +1144,10 @@ class BaseView(BrowserView):
 
     @property
     def filename(self):
-        return '%s.tsv' % self.__name__
+        return '%s.csv' % self.__name__
 
-    def getTSV(self):
-        return 'TSV Not Implemented' #NOOP
+    def getCSV(self):
+        return 'CSV Not Implemented' #NOOP
 
     def __call__(self):
 
@@ -1163,22 +1163,19 @@ class BaseView(BrowserView):
 
         # Pass back JSON or XML data, while setting request header.
         if data_format == 'json':
-            json = self.getJSON()
             self.request.response.setHeader('Content-Type', 'application/json')
-            return json
+            return self.getJSON()
 
         elif data_format == 'xml':
-            xml = self.getXML()
             self.request.response.setHeader('Content-Type', 'application/xml')
-            return xml
+            return self.getXML()
 
-        elif data_format == 'tsv':
-            tsv = self.getTSV()
-            self.request.response.setHeader('Content-Type', 'text/tab-separated-values')
+        elif data_format == 'csv':
+            self.request.response.setHeader('Content-Type', 'text/csv')
             self.request.response.setHeader(
                 'Content-Disposition',
                 'attachment; filename="%s"' % self.filename)
-            return tsv
+            return self.getCSV()
 
     # Handle HEAD request so testing the connection in Jitterbit doesn't fail
     # From plone.namedfile.scaling
