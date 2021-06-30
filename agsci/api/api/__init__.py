@@ -78,7 +78,12 @@ class BaseView(BrowserView):
     @property
     def show_empty_values(self):
         v = self.request.form.get('empty', 'False')
-        return not (v.lower() in ('false', '0'))
+
+        url_empty = not (v.lower() in ('false', '0'))
+
+        registry_empty = self.registry.get('agsci.atlas.api_empty')
+
+        return (url_empty or registry_empty)
 
     pretty_xml = False
 
@@ -1237,6 +1242,10 @@ class BaseView(BrowserView):
         fields = kwargs.get('fields', [])
         schemas = kwargs.get('schemas', [])
 
+        # If we were passed a 'fields' parameter (list of strings), convert
+        # that to the field name and a null value for the empty value
+        fields = [(x, None) for x in fields if isinstance(x, (str, unicode))]
+
         # Use the Atlas products schema if a schema is not passed in. Use
         # inherited schemas as well.
         if not schemas:
@@ -1259,7 +1268,7 @@ class BaseView(BrowserView):
                         empty_value = getEmptyValue(_field)
                         fields.append((_field_name, empty_value))
 
-        for (i, empty_value) in (fields):
+        for (i, empty_value) in fields:
 
             # Ref:
             # http://stackoverflow.com/questions/9790991/why-is-getattr-so-much-slower-than-self-dict-get
