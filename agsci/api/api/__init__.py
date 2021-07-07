@@ -289,7 +289,8 @@ class BaseView(BrowserView):
 
         for i in data.keys():
             if data[i] == Missing.Value \
-               or data[i] is None:
+               or data[i] is None \
+               or isinstance(data[i], (str, unicode)) and not data[i].strip():
                 del data[i]
 
         return data
@@ -312,7 +313,8 @@ class BaseView(BrowserView):
         # Remove null values
         for i in data.keys():
             if data[i] == Missing.Value \
-               or data[i] is None:
+               or data[i] is None \
+               or isinstance(data[i], (str, unicode)) and not data[i].strip():
                 del data[i]
 
         # Return listing
