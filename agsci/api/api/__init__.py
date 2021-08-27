@@ -878,8 +878,7 @@ class BaseView(BrowserView):
                                 if 'product_description' in _:
                                     html = _['product_description']
                                     if html and isinstance(html, (str, unicode)):
-                                        if '<span' in html:
-                                            _['product_description'] = self.fix_cvent_html(html)
+                                        _['product_description'] = self.fix_cvent_html(html)
 
             # Calculate/update fields if we're a Cvent event
             if IExternalEvent.providedBy(self.context):
@@ -900,11 +899,18 @@ class BaseView(BrowserView):
     # Remove spans and divs from html, and style and class attributes
     def fix_cvent_html(self, html):
 
-        el_re = re.compile("</*(span|div).*?>", re.I|re.M)
-        attr_re = re.compile('\s*(style|class)\s*=\s*".*?"', re.I|re.M)
+        if '<span' in html:
 
-        html = el_re.sub('', html)
-        html = attr_re.sub('', html)
+            el_re = re.compile("</*(span|div).*?>", re.I|re.M)
+            attr_re = re.compile('\s*(style|class)\s*=\s*".*?"', re.I|re.M)
+
+            html = el_re.sub('', html)
+            html = attr_re.sub('', html)
+
+        elif '<' not in html:
+            cr_re = re.compile("[\r\n]", re.I|re.M)
+            html = cr_re.sub('<br />', html)
+            return u"<p>%s</p>" % safe_unicode(html)
 
         return html
 
