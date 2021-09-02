@@ -511,6 +511,9 @@ class BaseView(BrowserView):
             ('cancellation_deadline', 'cancelation_deadline'),  # Misspelled per http://grammarist.com/spelling/cancel/
             ('store_view_id', 'website_ids'),
             ('pdf_file', 'pdf'),
+            ('is_featured_product_l1', 'is_featured_l1'),
+            ('is_featured_product_l2', 'is_featured_l2'),
+            ('is_featured_product_l3', 'is_featured_l3'),
         ]
 
         # Make dict out of key/value tuples
