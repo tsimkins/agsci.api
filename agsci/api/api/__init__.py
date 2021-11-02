@@ -977,7 +977,8 @@ class BaseView(BrowserView):
                 j = data.get(i, [])
 
                 for k in j:
-                    categories.append(tuple(k.split(DELIMITER)))
+                    if k and isinstance(k, (str, unicode)):
+                        categories.append(tuple(k.split(DELIMITER)))
 
                 if j:
                     del data[i]
