@@ -31,6 +31,7 @@ import urlparse
 import xml.dom.minidom
 
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, \
+                                  getAllSchemaFieldsAndDescriptions, getEmptyValue, \
                                   getBaseSchema, execute_under_special_role, \
                                   getBodyHTML, get_internal_store_categories
 
@@ -73,6 +74,16 @@ all_cap_re = re.compile('([a-z0-9])([A-Z])')
 class BaseView(BrowserView):
 
     allow_false_values = ALLOW_FALSE_VALUES
+
+    @property
+    def show_empty_values(self):
+        v = self.request.form.get('empty', 'False')
+
+        url_empty = not (v.lower() in ('false', '0'))
+
+        registry_empty = self.registry.get('agsci.atlas.api_empty')
+
+        return (url_empty or registry_empty)
 
     pretty_xml = False
 
@@ -272,15 +283,17 @@ class BaseView(BrowserView):
 
     def getMetadata(self):
         try:
-            m = self.portal_catalog.getMetadataForUID("/".join(self.context.getPhysicalPath()))
+            data = self.portal_catalog.getMetadataForUID("/".join(self.context.getPhysicalPath()))
         except:
             return {} # Return an empty dict if there's an issue with the catalog
 
-        for i in m.keys():
-            if m[i] == Missing.Value:
-                m[i] = ''
+        for i in data.keys():
+            if data[i] == Missing.Value \
+               or data[i] is None \
+               or isinstance(data[i], (str, unicode)) and not data[i].strip():
+                del data[i]
 
-        return m
+        return data
 
     def getIndexData(self):
 
@@ -296,6 +309,13 @@ class BaseView(BrowserView):
         except:
             # Skip if the object is not found (uncataloged objects for testing)
             pass
+
+        # Remove null values
+        for i in data.keys():
+            if data[i] == Missing.Value \
+               or data[i] is None \
+               or isinstance(data[i], (str, unicode)) and not data[i].strip():
+                del data[i]
 
         # Return listing
         return data
@@ -610,7 +630,7 @@ class BaseView(BrowserView):
     def remove_empty_nonrequired_fields(self, data):
 
         # Bypass this if show_all_fields is True
-        if not self.show_all_fields:
+        if not (self.show_empty_values or self.show_all_fields):
 
             for k in data.keys():
                 if k not in self.required_fields:
@@ -1060,6 +1080,9 @@ class BaseView(BrowserView):
                             'mimetype' : img_mimetype,
                             'caption' : leadimage_adapted.leadimage_caption,
                         }
+                elif self.show_empty_values:
+                    data['leadimage'] = {}
+                    data['include_lead_image'] = False
 
                 # File Field
                 if data.get('file', None) or self.show_all_fields:
@@ -1073,6 +1096,8 @@ class BaseView(BrowserView):
                             'data' : file_data,
                             'mimetype' : file_mimetype,
                         }
+                elif self.show_empty_values:
+                    data['file'] = {}
 
             # If we DO NOT show binary data
             else:
@@ -1229,6 +1254,10 @@ class BaseView(BrowserView):
         fields = kwargs.get('fields', [])
         schemas = kwargs.get('schemas', [])
 
+        # If we were passed a 'fields' parameter (list of strings), convert
+        # that to the field name and a null value for the empty value
+        fields = [(x, None) for x in fields if isinstance(x, (str, unicode))]
+
         # Use the Atlas products schema if a schema is not passed in. Use
         # inherited schemas as well.
         if not schemas:
@@ -1247,9 +1276,11 @@ class BaseView(BrowserView):
             # Only include schemas that provide form fields.
             if IFormFieldProvider.providedBy(i):
                 if i.providedBy(self.context):
-                    fields.extend(getAllSchemaFields(i))
+                    for (_field_name, _field) in getAllSchemaFieldsAndDescriptions(i):
+                        empty_value = getEmptyValue(_field)
+                        fields.append((_field_name, empty_value))
 
-        for i in set(fields):
+        for (i, empty_value) in fields:
 
             # Ref:
             # http://stackoverflow.com/questions/9790991/why-is-getattr-so-much-slower-than-self-dict-get
@@ -1266,22 +1297,29 @@ class BaseView(BrowserView):
             # This doesn't seem to have a significant performance impact, and
             # it returns the "right" value.
 
-            v = self.context.__dict__.get(i,
+            # Don't overwrite existing key
+            if i not in data:
+
+                v = self.context.__dict__.get(i,
                     getattr(self.context, i, None)
                 )
 
-            # If it's a text field
-            if hasattr(v, 'raw'):
-                v = v.raw
-
-            # Handle values, if they exist
-            if v or isinstance(v, self.allow_false_values):
+                # If it's a text field
+                if hasattr(v, 'raw'):
+                    v = v.raw
 
                 # Filter out blank list items
                 if isinstance(v, (list, tuple,)):
                     v = [x for x in v if x]
 
-                data[i] = v
+                # If no value, populate with the 'empty' default for the data type
+                if v is None:
+                    v = empty_value
+
+                # Handle values, if they exist
+                if v or isinstance(v, self.allow_false_values) \
+                   or self.show_empty_values:
+                    data[i] = v
 
         data = self.fixData(data)
 
