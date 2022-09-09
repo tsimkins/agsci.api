@@ -16,16 +16,13 @@ class InvalidMagentoURLKeysView(MagentoView):
 
         product_type = product.get('product_type_value')
         title = product.get('name')
-
         suffix = {
-            u'Publication Print' : 'print',
-            u'Workshop Group' : 'workshop',
-            u'Webinar Group' : 'webinar',
-            u'Conference Group' : 'conference',
-            u'Learn Now Video' : 'video',
-            u'News Item' : 'news',
-            u'Online Course Group' : 'online',
-            u'Article' : None,
+            "APPs" : "app",
+            "Publication" : "print",
+            "Smart Sheets" : "smartsheet",
+            "Video Free" : "video",
+            "Workshop Complex" : "workshop",
+            "Workshop Simple" : "workshop",
         }.get(product_type, ploneify(product_type))
 
         url = ploneify(title)
