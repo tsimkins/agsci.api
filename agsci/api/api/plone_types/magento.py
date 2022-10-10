@@ -1,6 +1,10 @@
+from DateTime import DateTime
+
 from . import PloneSiteView
+from agsci.atlas.constants import EPAS_UNIT_LEADERS, \
+    EPAS_TEAM_LEADERS, ACTIVE_REVIEW_STATES
 from agsci.atlas.cron.jobs.magento import MagentoJob
-from agsci.atlas.utilities import ploneify
+from agsci.atlas.utilities import SitePeople, ploneify
 
 class MagentoView(PloneSiteView):
 
@@ -9,6 +13,132 @@ class MagentoView(PloneSiteView):
     @property
     def magento_data(self):
         return MagentoJob(self.context)
+
+class ExpiringOwnerProducts(MagentoView):
+
+    DEFAULT_DELTA = 62 # Days
+
+    @property
+    def delta(self):
+        _ = self.request.get('delta', None)
+
+        if _ and _.isdigit():
+            return int(_)
+
+        return self.DEFAULT_DELTA
+
+    @property
+    def agcomm_people(self):
+        sp = SitePeople()
+        _ = [x.getId for x in sp.agcomm_people]
+        _.extend([u'sbj2',])
+        return _
+
+    @property
+    def expiring_people(self):
+
+        # Already expired people
+        results = self.portal_catalog.searchResults({
+            'Type' : 'Person',
+            'review_state' : ['published-inactive', 'expired'],
+        })
+
+        agcomm_people = self.agcomm_people
+
+        _ids = [x.getId for x in results if x.getId not in agcomm_people]
+
+        # Expring People
+
+        results = self.portal_catalog.searchResults({
+            'Type' : 'Person',
+            'expires' : {
+                'range' : 'max',
+                'query' : DateTime() + self.delta, # Two Months
+            }
+        })
+
+        _ids.extend([x.getId for x in results if x.getId not in agcomm_people])
+
+        return list(set(_ids))
+
+    def get_products_owned_by(self, _ids):
+
+        return self.portal_catalog.searchResults({
+            'object_provides' : 'agsci.atlas.content.IAtlasProduct',
+            'Owners' : _ids,
+            'review_state' : ACTIVE_REVIEW_STATES
+        })
+
+    def get_user_structure(self, r):
+
+        now = DateTime()
+        replace_owner = not not (now > r.expires or (r.expires - now) <= self.delta)
+
+        return {
+            'id' : r.getId,
+            'name' : r.Title,
+            'expires' : r.expires.strftime('%Y-%m-%d'),
+            'replace_owner' : replace_owner,
+        }
+
+
+    def getData(self, **kwargs):
+
+        _rv = []
+
+        _ids = self.expiring_people
+
+        sp = SitePeople(active=False)
+
+        for r in self.get_products_owned_by(_ids):
+
+            o = r.getObject()
+
+            # Get existing owners
+            owners = list(getattr(o, 'owners', []))
+            owners = [x for x in owners if x]
+
+            # Copy of original owners
+            _owners = list(owners)
+
+            # Remove expiring owners
+            for _ in _ids:
+                if _ in owners:
+                    owners.remove(_)
+
+            # Get new owners if no owners left.
+            if not owners:
+
+                # Get the primary team and team lead(s)
+                epas_primary_team = getattr(o, 'epas_primary_team', None)
+
+                owners = EPAS_TEAM_LEADERS.get(epas_primary_team, [])
+
+                owners = [x for x in owners if x]
+
+                # If no team leads assigned, go with the ADP
+                if not owners:
+
+                    if r.EPASUnit:
+
+                        for _ in r.EPASUnit:
+                            owners.extend(EPAS_UNIT_LEADERS.get(_, []))
+
+                # Cleanup
+                owners = [x for x in owners if x]
+                owners = sorted(set(owners))
+
+                _rv.append({
+                    'url' : r.getURL(),
+                    'title' : r.Title,
+                    'primary_team' : epas_primary_team,
+                    'unit' : ";".join(r.EPASUnit),
+                    'team' : ";".join(r.EPASTeam),
+                    'original_owners' : [self.get_user_structure(sp.getPersonById(x)) for x in _owners],
+                    'new_owners' : [self.get_user_structure(sp.getPersonById(x)) for x in owners],
+                })
+
+        return _rv
 
 class InvalidMagentoURLKeysView(MagentoView):
 
