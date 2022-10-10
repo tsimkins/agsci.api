@@ -132,6 +132,7 @@ class ExpiringOwnerProducts(MagentoView):
                 _rv.append({
                     'sku' : r.SKU,
                     'plone_product_type' : r.Type,
+                    'plone_id' : r.UID,
                     'plone_url' : r.getURL(),
                     'name' : r.Title,
                     'primary_team' : epas_primary_team,
