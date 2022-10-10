@@ -79,6 +79,7 @@ class ExpiringOwnerProducts(MagentoView):
             'name' : r.Title,
             'expires' : r.expires.strftime('%Y-%m-%d'),
             'replace_owner' : replace_owner,
+            'plone_url' : r.getURL(),
         }
 
 
@@ -129,8 +130,10 @@ class ExpiringOwnerProducts(MagentoView):
                 owners = sorted(set(owners))
 
                 _rv.append({
-                    'url' : r.getURL(),
-                    'title' : r.Title,
+                    'sku' : r.SKU,
+                    'plone_product_type' : r.Type,
+                    'plone_url' : r.getURL(),
+                    'name' : r.Title,
                     'primary_team' : epas_primary_team,
                     'unit' : ";".join(r.EPASUnit),
                     'team' : ";".join(r.EPASTeam),
