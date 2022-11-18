@@ -431,6 +431,7 @@ class BaseView(BrowserView):
             'curriculum',
             'program_team',
             'state_extension_team',
+            'internal_store_categories',
         ]
 
         if self.isChildProduct() or not self.isProduct():
