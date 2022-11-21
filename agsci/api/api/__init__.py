@@ -1047,7 +1047,7 @@ class BaseView(BrowserView):
                 )
 
             # Make unique
-            categories = sorted(set(categories))
+            data['categories'] = sorted(set(data['categories']))
 
             # Populate Updated EPAS Structure Information if none was set
             # through an adapter.
