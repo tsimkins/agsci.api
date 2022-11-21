@@ -1046,6 +1046,9 @@ class BaseView(BrowserView):
                     self.hiddenProductCategories()
                 )
 
+            # Make unique
+            categories = sorted(set(categories))
+
             # Populate Updated EPAS Structure Information if none was set
             # through an adapter.
             if not data.has_key('epas'):
