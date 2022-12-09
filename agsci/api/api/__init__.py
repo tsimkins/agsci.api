@@ -71,6 +71,10 @@ CACHED_DATA_TIMEOUT = 86400.0
 first_cap_re = re.compile('(.)([A-Z][a-z]+)')
 all_cap_re = re.compile('([a-z0-9])([A-Z])')
 
+OMIT_DESCRIPTION_TYPES = [
+    'Slideshow',
+]
+
 class BaseView(BrowserView):
 
     allow_false_values = ALLOW_FALSE_VALUES
@@ -1155,11 +1159,14 @@ class BaseView(BrowserView):
                     del data[k]
 
         # Body text
-        if not data.has_key('description'):
-            body_html = getBodyHTML(self.context)
+        if self.context.Type() in OMIT_DESCRIPTION_TYPES:
+            data['description'] = ''
+        else:
+            if not data.has_key('description'):
+                body_html = getBodyHTML(self.context)
 
-            if body_html:
-                data['description'] = body_html
+                if body_html:
+                    data['description'] = body_html
 
 
         # Delete explicitly delete
