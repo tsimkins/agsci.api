@@ -47,7 +47,7 @@ class ExpiringOwnerProducts(MagentoView):
 
         _ids = [x.getId for x in results if x.getId not in agcomm_people]
 
-        # Expring People
+        # Expiring People
 
         results = self.portal_catalog.searchResults({
             'Type' : 'Person',
@@ -82,36 +82,46 @@ class ExpiringOwnerProducts(MagentoView):
             'plone_url' : r.getURL(),
         }
 
+    def get_active_ids(self, o, field):
+
+        # Get existing ids
+        ids = getattr(o.aq_base, field, [])
+
+        if not ids:
+            return []
+
+        # Copy of original ids, and remove   expiring ids
+        return [x for x in ids if x and x not in self.expiring_people]
 
     def getData(self, **kwargs):
 
         _rv = []
 
-        _ids = self.expiring_people
-
         sp = SitePeople(active=False)
 
-        for r in self.get_products_owned_by(_ids):
+        for r in self.get_products_owned_by(self.expiring_people):
 
             o = r.getObject()
 
-            # Get existing owners
-            owners = list(getattr(o, 'owners', []))
-            owners = [x for x in owners if x]
+            # Get the primary team
+            epas_primary_team = getattr(o, 'epas_primary_team', None)
 
-            # Copy of original owners
-            _owners = list(owners)
+            # Original owners
+            _owners = sorted(set((getattr(o.aq_base, 'owners', []))))
 
-            # Remove expiring owners
-            for _ in _ids:
-                if _ in owners:
-                    owners.remove(_)
+            # Get active owners and authors
+            owners = self.get_active_ids(o, 'owners')
+            authors = self.get_active_ids(o, 'authors')
 
-            # Get new owners if no owners left.
+            # If no active owners, use first author
+            if not owners:
+                if authors:
+                    owners = [authors[0],]
+
+            # Get new owners from EPAS team leader if no owners left.
             if not owners:
 
-                # Get the primary team and team lead(s)
-                epas_primary_team = getattr(o, 'epas_primary_team', None)
+                # Get the team lead(s)
 
                 owners = EPAS_TEAM_LEADERS.get(epas_primary_team, [])
 
@@ -125,9 +135,12 @@ class ExpiringOwnerProducts(MagentoView):
                         for _ in r.EPASUnit:
                             owners.extend(EPAS_UNIT_LEADERS.get(_, []))
 
-                # Cleanup
-                owners = [x for x in owners if x]
-                owners = sorted(set(owners))
+            # Cleanup
+            owners = [x for x in owners if x]
+            owners = sorted(set(owners))
+
+            # If our new owners don't match the original, add this to the rv
+            if tuple(owners) != tuple(_owners):
 
                 _rv.append({
                     'sku' : r.SKU,
