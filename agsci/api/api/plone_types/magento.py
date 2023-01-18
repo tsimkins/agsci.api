@@ -1,4 +1,5 @@
 from DateTime import DateTime
+from plone.memoize.instance import memoize
 
 from . import PloneSiteView
 from agsci.atlas.constants import EPAS_UNIT_LEADERS, \
@@ -35,6 +36,7 @@ class ExpiringOwnerProducts(MagentoView):
         return _
 
     @property
+    @memoize
     def expiring_people(self):
 
         # Already expired people
