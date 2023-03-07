@@ -33,12 +33,42 @@ class PloneSiteView(BaseView):
 
         # URL parameters
         uid = self.request.get('UID', self.request.get('uid', None))
+        sku = self.request.get('SKU', self.request.get('sku', None))
         modified = self.getModifiedCriteria()
 
         # Query for object having UID, if that parameter is provided
         if uid:
 
             results = self.portal_catalog.searchResults({'UID' : uid})
+
+            if results:
+                o = results[0].getObject()
+                data = o.restrictedTraverse('@@api').getData()
+        # Query for object having SKU, if that parameter is provided
+        if sku:
+
+            def sort_key(_):
+                states = [
+                    'published',
+                    'expiring_soon',
+                    'pending',
+                    'expired',
+                    'private',
+                    'published-inactive',
+                    'archived',
+                ]
+
+                if hasattr(_, 'SKU') and _.SKU in states:
+                    return states.index(_.SKU)
+
+                return 999
+
+            results = self.portal_catalog.searchResults({
+                'SKU' : sku,
+                'object_provides' : 'agsci.atlas.content.IAtlasProduct',
+            })
+
+            results = sorted(results, key=lambda x: sort_key(x))
 
             if results:
                 o = results[0].getObject()
