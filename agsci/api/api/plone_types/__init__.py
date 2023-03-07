@@ -62,7 +62,7 @@ class PloneSiteView(BaseView):
                             'query' : DateTime(),
                             'range' : 'max',
                         },
-                        'review_state' : ['published', 'expired'],
+                        'review_state' : ['published', 'expired', 'expiring_soon'],
                     }
 
             # Query catalog

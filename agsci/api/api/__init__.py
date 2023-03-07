@@ -353,6 +353,18 @@ class BaseView(BrowserView):
         # Exclude empty non-required fields
         data = self.remove_empty_nonrequired_fields(data)
 
+        # Treat expiring soon items as published
+        data = self.fix_review_state(data)
+
+        return data
+
+    # Treat expiring soon items as published
+    def fix_review_state(self, data):
+
+        if 'plone_status' in data:
+            if data['plone_status'] == 'expiring_soon':
+                data['plone_status'] = 'published'
+
         return data
 
     def exclude_unused_fields(self, data):
