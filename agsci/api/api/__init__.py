@@ -523,7 +523,7 @@ class BaseView(BrowserView):
             ('username', 'person_psu_user_id'),
             ('start', 'event_start_date'),
             ('end', 'event_end_date'),
-            ('agenda', 'event_agenda_disabled'),
+            ('agenda', 'event_agenda'),
             ('contact_email', 'email_address'),
             ('email', 'email_address'),
             ('street_address', 'address'),
