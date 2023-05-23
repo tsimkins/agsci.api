@@ -10,10 +10,14 @@ from zLOG import LOG, INFO
 from zope import schema
 from zope.component import getMultiAdapter, getUtility
 from zope.component.hooks import getSite
-from zope.component.interfaces import ComponentLookupError
 from zope.interface.interface import Method
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
+
+try:
+    from zope.interface.interfaces import ComponentLookupError
+except ImportError:
+    from zope.component.interfaces import ComponentLookupError
 
 import itertools
 import transaction
@@ -45,14 +49,14 @@ class SampleAPIView(PloneSiteView):
         for k in new_data.keys():
             # If the current data item doesn't have an existing key, or an
             # empty/null key, replace the value with a copy of the new data.
-            if not data.has_key(k) or \
+            if k not in data or \
                isinstance(data[k], None.__class__) or \
                not data[k] or \
                type_idx(new_data[k]) < type_idx(data[k]):
                 data[k] = copy(new_data[k])
 
             # Otherwise, it's a valid value, combine them
-            elif data.has_key(k):
+            elif k in data:
 
                 # If they're both dicts
                 if isinstance(data[k], dict) and isinstance(new_data[k], dict):
@@ -279,7 +283,7 @@ class SampleAPIView(PloneSiteView):
 
             try:
                 data = execute_under_special_role(['Contributor', 'Reader', 'Editor', 'Member'], self.getSampleData)
-            except Exception, e:
+            except Exception as e:
                 data = {
                         'exception' : e.__class__.__name__,
                         'message' : e.message,
@@ -377,7 +381,7 @@ class SampleAPIView(PloneSiteView):
         # the sample for some reason
         for i in range(1,4):
             k = 'category_level%d' % i
-            if sample_data.has_key(k):
+            if k in sample_data:
                 del sample_data[k]
 
         # Event When Custom (for Cvent integration only)

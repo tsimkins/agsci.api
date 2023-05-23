@@ -1,4 +1,4 @@
-from image import ImageView
+from .image import ImageView
 
 class FileView(ImageView):
 

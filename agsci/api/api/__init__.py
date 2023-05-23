@@ -1,4 +1,3 @@
-from BeautifulSoup import BeautifulSoup
 from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
@@ -12,11 +11,15 @@ from datetime import datetime, timedelta
 from plone.autoform.interfaces import IFormFieldProvider
 from plone.registry.interfaces import IRegistry
 from time import time
-from urllib import urlencode
 from zope.component import getAdapters, getMultiAdapter, getUtility
 from zope.component.hooks import getSite
-from zope.interface import implements
+from zope.interface import implementer
 from zope.publisher.interfaces import IPublishTraverse
+
+try:
+    from urllib.parse import urlencode # Python 3
+except ImportError:
+    from urllib import urlencode # Python 2
 
 import Missing
 import dicttoxml
@@ -25,10 +28,18 @@ import logging
 import pickle
 import re
 import redis
-import urllib
-import urllib2
-import urlparse
 import xml.dom.minidom
+
+try:
+    from urllib.request import urlopen # Python 3
+    from urllib.error import HTTPError
+except ImportError:
+    from urllib2 import urlopen, HTTPError # Python 2
+
+try:
+    from urllib.parse import urlparse, parse_qs # Python 3
+except ImportError:
+    from urlparse import urlparse, parse_qs # Python 2
 
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, \
                                   getAllSchemaFieldsAndDescriptions, getEmptyValue, \
@@ -75,6 +86,7 @@ OMIT_DESCRIPTION_TYPES = [
     'Slideshow',
 ]
 
+@implementer(IPublishTraverse)
 class BaseView(BrowserView):
 
     allow_false_values = ALLOW_FALSE_VALUES
@@ -90,8 +102,6 @@ class BaseView(BrowserView):
         return (url_empty or registry_empty)
 
     pretty_xml = False
-
-    implements(IPublishTraverse)
 
     data_format = None
     valid_data_formats = ['json', 'xml', 'csv']
@@ -330,7 +340,7 @@ class BaseView(BrowserView):
         indexdata = self.getIndexData()
 
         for i in indexdata.keys():
-            if not data.has_key(i):
+            if i not in data:
                 data[i] = indexdata[i]
 
         # Include a pickled brain in data
@@ -485,7 +495,7 @@ class BaseView(BrowserView):
                 self.rename_key(self.format_key(i))
             ]:
 
-                if data.has_key(_i):
+                if _i in data:
                     del data[_i]
 
         return data
@@ -571,7 +581,7 @@ class BaseView(BrowserView):
 
     def fix_value_datatypes(self, data):
 
-        for (k,v) in data.iteritems():
+        for (k,v) in data.items():
 
             # If we're a datetime, convert to DateTime and use the ISO representation string
             if isinstance(v, datetime):
@@ -1001,7 +1011,7 @@ class BaseView(BrowserView):
         if self.isProduct():
 
             # Magento Visibility.  Provide default if not already set.
-            if not data.has_key('visibility'):
+            if not 'visibility' not in data:
                 data['visibility'] = V_CS
 
             # Map product type to what Magento expects
@@ -1047,7 +1057,7 @@ class BaseView(BrowserView):
 
             # Populate Updated EPAS Structure Information if none was set
             # through an adapter.
-            if not data.has_key('epas'):
+            if 'epas' not in data:
                 epas_structure_keys = ['epas_team', 'epas_topic', 'epas_subtopic']
 
                 epas_structure = []
@@ -1059,7 +1069,7 @@ class BaseView(BrowserView):
                         for k in j:
                             epas_structure.append(tuple(k.split(DELIMITER)))
 
-                        if data.has_key(i):
+                        if i in data:
                             del data[i]
 
                 if epas_structure:
@@ -1124,7 +1134,7 @@ class BaseView(BrowserView):
             # If we DO NOT show binary data
             else:
                 for i in ['file', 'image', 'leadimage', 'pdf']:
-                    if data.has_key(i):
+                    if i in data:
                         del data[i]
 
             # Include subproduct data (default yes, but getSubProductData() calls
@@ -1134,7 +1144,7 @@ class BaseView(BrowserView):
                 subproduct_data = self.getSubProductData()
 
                 if subproduct_data:
-                    if not data.has_key("contents"):
+                    if 'contents' not in data:
                         data['contents'] = []
 
                     data['contents'].extend(subproduct_data)
@@ -1147,14 +1157,14 @@ class BaseView(BrowserView):
             # Remove all the product fields for non-products
             for k in ('publish_date', 'product_expiration', 'updated_at',
                       'plone_status', 'language', 'authors', 'owners'):
-                if data.has_key(k):
+                if k in data:
                     del data[k]
 
         # Body text
         if self.context.Type() in OMIT_DESCRIPTION_TYPES:
             data['description'] = ''
         else:
-            if not data.has_key('description'):
+            if 'description' not in data:
                 body_html = getBodyHTML(self.context)
 
                 if body_html:
@@ -1237,7 +1247,7 @@ class BaseView(BrowserView):
     def __call__(self):
 
         # If we didn't get a value passed in for 'expensive', set it to the view default.
-        if not self.request.form.has_key('expensive'):
+        if 'expensive' not in self.request.form:
             self.request.form['expensive'] = '%r' % self.expensive
 
         data_format = self.getDataFormat()
@@ -1489,12 +1499,12 @@ class BaseView(BrowserView):
                 if isinstance(url, (str, unicode)) and url:
 
                     # http://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
-                    url_parts = list(urlparse.urlparse(url))
-                    query = dict(urlparse.parse_qsl(url_parts[4]))
+                    url_parts = list(urlparse(url))
+                    query = dict(parse_qsl(url_parts[4]))
                     query.update(params)
 
                     url_parts[4] = urlencode(query)
-                    data[k] = urlparse.urlunparse(url_parts)
+                    data[k] = urlunparse(url_parts)
 
         return data
 
@@ -1561,7 +1571,7 @@ class BaseView(BrowserView):
     def redis_cachekey(self):
 
         # Sorting values by key
-        values = OrderedDict(sorted(self.redis_cachekey_values.iteritems(), key=lambda x: x[0]))
+        values = OrderedDict(sorted(self.redis_cachekey_values.items(), key=lambda x: x[0]))
 
         # Prepend a static string, in case we want to use REDIS for other cached
         # data
@@ -1574,7 +1584,7 @@ class BaseView(BrowserView):
             try:
                 pickled_data = self.redis.get(self.redis_cachekey)
 
-            except Exception, e:
+            except Exception as e:
 
                 # Errors connecting?  Log and return an empty value.
                 self.log(u"Could not connect to redis server: %s" % e.__class__.__name__)
@@ -1602,7 +1612,7 @@ class BaseView(BrowserView):
 
                 self.redis.setex(self.redis_cachekey, timeout, pickled_data)
 
-            except Exception, e:
+            except Exception as e:
 
                 # Errors connecting?  Log.
                 self.log(u"Could not connect to redis server: %s" % e.__class__.__name__)
@@ -1650,8 +1660,8 @@ def getAPIData(object_url):
     json_url = '%s/@@api/json' % object_url
 
     try:
-        json_data = urllib2.urlopen(json_url).read()
-    except urllib2.HTTPError:
+        json_data = urlopen(json_url).read()
+    except HTTPError:
         raise ValueError("Error accessing object, url: %s" % json_url)
 
     # Convert JSON to Python structure

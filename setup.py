@@ -26,7 +26,7 @@ setup(name='agsci.api',
     zip_safe=False,
     install_requires=[
       'setuptools',
-      'BeautifulSoup',
+      'beautifulsoup4',
       'dicttoxml',
       'plone.app.contenttypes',
       'redis',
