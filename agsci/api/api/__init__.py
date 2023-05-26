@@ -79,8 +79,8 @@ DELETE_VALUE = DeleteValue()
 # unused cached values in memory.
 CACHED_DATA_TIMEOUT = 86400.0
 
-first_cap_re = re.compile('(.)([A-Z][a-z]+)')
-all_cap_re = re.compile('([a-z0-9])([A-Z])')
+first_cap_re = re.compile(r'(.)([A-Z][a-z]+)')
+all_cap_re = re.compile(r'([a-z0-9])([A-Z])')
 
 OMIT_DESCRIPTION_TYPES = [
     'Slideshow',
@@ -301,11 +301,11 @@ class BaseView(BrowserView):
         except:
             return {} # Return an empty dict if there's an issue with the catalog
 
-        for i in data.keys():
-            if data[i] == Missing.Value \
-               or data[i] is None \
-               or isinstance(data[i], (str, unicode)) and not data[i].strip():
-                del data[i]
+        for (k,v) in list(data.items()):
+            if v == Missing.Value \
+               or v is None \
+               or isinstance(v, (str, )) and not v.strip():
+                del data[k]
 
         return data
 
@@ -325,11 +325,11 @@ class BaseView(BrowserView):
             pass
 
         # Remove null values
-        for i in data.keys():
-            if data[i] == Missing.Value \
-               or data[i] is None \
-               or isinstance(data[i], (str, unicode)) and not data[i].strip():
-                del data[i]
+        for (k,v) in list(data.items()):
+            if v == Missing.Value \
+               or v is None \
+               or isinstance(v, (str, )) and not v.strip():
+                del data[k]
 
         # Return listing
         return data
@@ -503,7 +503,7 @@ class BaseView(BrowserView):
     def normalize_keys(self, data):
 
         # Ensure keys from catalog indexes/metadata are non-camel case lowercase
-        for k in data.keys():
+        for k in list(data.keys()):
             _k = self.format_key(k)
 
             # Rename key if it's not an explicit DELETE_VALUE
@@ -591,6 +591,10 @@ class BaseView(BrowserView):
             elif isinstance(v, DateTime):
                 data[k] = toISO(data[k])
 
+            # If we're bytes, convert to unicode
+            elif isinstance(v, bytes):
+                data[k] = safe_unicode(data[k])
+
             # Convert decimal to string with two decimal places, or eight for
             # lat/lon
             elif isinstance(v, Decimal):
@@ -610,7 +614,7 @@ class BaseView(BrowserView):
             # XML type logic sees `zope.i18nmessageid.message.Message` as a list
             # and returns the type one letter at a time as a list.
             elif type(v).__name__ == 'Message':
-                data[k] = unicode(v)
+                data[k] = safe_unicode(v)
 
             # If this is a file, add additional mimetype info
             elif isinstance(v, NamedBlobFile):
@@ -659,7 +663,7 @@ class BaseView(BrowserView):
         # Bypass this if show_all_fields is True
         if not (self.show_empty_values or self.show_all_fields):
 
-            for k in data.keys():
+            for k in list(data.keys()):
                 if k not in self.required_fields:
 
                     # If it's not a int or boolean value, and an empty value, delete it.
@@ -704,15 +708,16 @@ class BaseView(BrowserView):
     #
     def minimizeStructure(self, c, keys=[], prefix=None):
         if c:
-            lengths = map(lambda x:len(x), c)
+            lengths = [len(x) for x in c]
+
             min_items =  min(lengths)
             max_items =  max(lengths)
 
             if max_items > min_items:
                 for i in range(min_items,max_items):
-                    base_items = filter(lambda x: len(x) == i, c)
-                    base_items_plus = filter(lambda x: len(x) > i, c)
-                    base_items_plus_adjusted = map(lambda x: tuple(x[0:i]), base_items_plus)
+                    base_items = [x for x in c if len(x) == i]
+                    base_items_plus = [x for x in c if len(x)> i]
+                    base_items_plus_adjusted = [tuple(x[0:i]) for x in  base_items_plus]
                     for j in set(base_items_plus_adjusted) & set(base_items):
                         c.remove(j)
 
@@ -909,7 +914,7 @@ class BaseView(BrowserView):
 
                                 if 'product_description' in _:
                                     html = _['product_description']
-                                    if html and isinstance(html, (str, unicode)):
+                                    if html and isinstance(html, (str,)):
                                         _['product_description'] = self.fix_cvent_html(html)
 
             # Calculate/update fields if we're a Cvent event
@@ -933,14 +938,14 @@ class BaseView(BrowserView):
 
         if '<span' in html:
 
-            el_re = re.compile("</*(span|div).*?>", re.I|re.M)
-            attr_re = re.compile('\s*(style|class)\s*=\s*".*?"', re.I|re.M)
+            el_re = re.compile(r"</*(span|div).*?>", re.I|re.M)
+            attr_re = re.compile(r'\s*(style|class)\s*=\s*".*?"', re.I|re.M)
 
             html = el_re.sub('', html)
             html = attr_re.sub('', html)
 
         elif '<' not in html:
-            cr_re = re.compile("[\r\n]", re.I|re.M)
+            cr_re = re.compile(r"[\r\n]", re.I|re.M)
             html = cr_re.sub('<br />', html)
             return u"<p>%s</p>" % safe_unicode(html)
 
@@ -1026,7 +1031,7 @@ class BaseView(BrowserView):
                 j = data.get(i, [])
 
                 for k in j:
-                    if k and isinstance(k, (str, unicode)):
+                    if k and isinstance(k, (str,)):
                         categories.append(tuple(k.split(DELIMITER)))
 
                 if j:
@@ -1178,7 +1183,7 @@ class BaseView(BrowserView):
 
     def clearDeletedValues(self, data):
         # Delete explicitly delete
-        for _k in data.keys():
+        for _k in list(data.keys()):
             if isinstance(data[_k], DeleteValue):
                 del data[_k]
 
@@ -1230,7 +1235,7 @@ class BaseView(BrowserView):
             xml_string = dicttoxml.dicttoxml(data, custom_root='item')
 
             # Replace type="..." in XML
-            list_re = re.compile('\s*type=".*?"', re.I|re.M)
+            list_re = re.compile(r'\s*type=".*?"', re.I|re.M)
             xml_string = list_re.sub('', xml_string)
 
             # Return pretty XML
@@ -1291,7 +1296,7 @@ class BaseView(BrowserView):
 
         # If we were passed a 'fields' parameter (list of strings), convert
         # that to the field name and a null value for the empty value
-        fields = [(x, None) for x in fields if isinstance(x, (str, unicode))]
+        fields = [(x, None) for x in fields if isinstance(x, (str,))]
 
         # Use the Atlas products schema if a schema is not passed in. Use
         # inherited schemas as well.
@@ -1491,12 +1496,12 @@ class BaseView(BrowserView):
         sku = data.get('sku',  None)
 
         # If it's a non-null sku, add it to the URL
-        if isinstance(sku, (str, unicode)) and sku:
+        if isinstance(sku, (str,)) and sku:
             params = {'sku' : sku}
 
             for k in fields:
                 url = data.get(k, None)
-                if isinstance(url, (str, unicode)) and url:
+                if isinstance(url, (str,)) and url:
 
                     # http://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
                     url_parts = list(urlparse(url))

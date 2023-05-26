@@ -38,7 +38,7 @@ class SampleAPIView(PloneSiteView):
     # Merge values with existing values, preferring more complex data types
     def updateValues(self, data, new_data):
 
-        p = [dict, list, tuple, unicode, str, int, float, bool]
+        p = [dict, list, tuple, str, int, float, bool]
 
         def type_idx(i):
             try:
@@ -67,7 +67,7 @@ class SampleAPIView(PloneSiteView):
                     data[k] = list(data[k]) + list(new_data[k])
 
                     # Unique values if they're all strings
-                    if all([isinstance(x, (str, unicode)) for x in data[k]]):
+                    if all([isinstance(x, (str, )) for x in data[k]]):
                         data[k] = list(set(data[k]))
 
         return data
@@ -82,8 +82,8 @@ class SampleAPIView(PloneSiteView):
         elif isinstance(data, (list, tuple)):
             data = [self.replaceValues(x) for x in data]
 
-            # If data is entirely str/unicode, only present one item
-            if all([isinstance(x, (str, unicode)) for x in data]):
+            # If data is entirely str, only present one item
+            if all([isinstance(x, (str, )) for x in data]):
                 data = data[0:1]
 
             # If data is entirely list/tuple, combine contents into one list
@@ -102,7 +102,7 @@ class SampleAPIView(PloneSiteView):
                 data = [v,]
 
 
-        elif isinstance(data, (str, unicode)):
+        elif isinstance(data, (str, )):
             data = self.placeholder
 
         elif isinstance(data, (int, float)):
@@ -286,7 +286,7 @@ class SampleAPIView(PloneSiteView):
             except Exception as e:
                 data = {
                         'exception' : e.__class__.__name__,
-                        'message' : e.message,
+                        'message' : str(e),
                     }
 
         # Abort the transaction so nothing actually gets created.
