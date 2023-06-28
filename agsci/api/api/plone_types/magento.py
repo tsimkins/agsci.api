@@ -112,12 +112,12 @@ class ExpiringOwnerProducts(MagentoView):
             # Original owners
             _owners = sorted(set((getattr(o.aq_base, 'owners', []))))
 
-            # Remove AgComm People
-            _owners = [x for x in _owners if x not in agcomm_people]
-
             # Get active owners and authors
             owners = self.get_active_ids(o, 'owners')
             authors = self.get_active_ids(o, 'authors')
+
+            # Remove AgComm People
+            owners = [x for x in owners if x not in agcomm_people]
 
             # If no active owners, use first author
             if not owners:
