@@ -732,7 +732,7 @@ class BaseView(BrowserView):
             def toDict(x):
                 return dict(zip(keys, x))
 
-            return map(toDict, c)
+            return [toDict(x) for x in c]
 
         return c
 
