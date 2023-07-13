@@ -17,7 +17,7 @@ from zope.interface import implementer
 from zope.publisher.interfaces import IPublishTraverse
 
 try:
-    from urllib.parse import urlencode # Python 3
+    from urllib.parse import urlencode, parse_qsl, urlunparse # Python 3
 except ImportError:
     from urllib import urlencode # Python 2
 
