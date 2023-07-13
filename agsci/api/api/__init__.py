@@ -1016,7 +1016,7 @@ class BaseView(BrowserView):
         if self.isProduct():
 
             # Magento Visibility.  Provide default if not already set.
-            if not 'visibility' not in data:
+            if 'visibility' not in data:
                 data['visibility'] = V_CS
 
             # Map product type to what Magento expects
