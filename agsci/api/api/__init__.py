@@ -348,8 +348,7 @@ class BaseView(BrowserView):
 
         # Include a pickled brain in data
         if self.showBrain:
-            data['brain'] = b64encode(pickle.dumps(data, protocol=2))
-
+            data['brain'] = b64encode(pickle.dumps(data, protocol=2)).decode('utf-8')
         return data
 
     def fixData(self, data):
