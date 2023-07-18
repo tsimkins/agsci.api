@@ -2,6 +2,7 @@ from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
+from base64 import b64encode
 from plone.app.textfield.value import RichTextValue
 from plone.namedfile.file import NamedBlobFile
 from agsci.leadimage.content.behaviors import LeadImage
@@ -343,11 +344,13 @@ class BaseView(BrowserView):
             if i not in data:
                 data[i] = indexdata[i]
 
+        data = self.fixData(data)
+
         # Include a pickled brain in data
         if self.showBrain:
-            data['brain'] = pickle.dumps(data)
+            data['brain'] = b64encode(pickle.dumps(data, protocol=2))
 
-        return self.fixData(data)
+        return data
 
     def fixData(self, data):
 
