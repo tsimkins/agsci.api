@@ -18,9 +18,13 @@ from zope.interface import implementer
 from zope.publisher.interfaces import IPublishTraverse
 
 try:
-    from urllib.parse import urlencode, parse_qsl, urlunparse # Python 3
+    from urllib.parse import urlencode, parse_qsl, urlunparse, urlparse, parse_qs # Python 3
+    from urllib.request import urlopen # Python 3
+    from urllib.error import HTTPError
 except ImportError:
     from urllib import urlencode # Python 2
+    from urllib2 import urlopen, HTTPError # Python 2
+    from urlparse import urlparse, parse_qs, parse_qsl, urlunparse # Python 2
 
 import Missing
 import dicttoxml
@@ -30,17 +34,6 @@ import pickle
 import re
 import redis
 import xml.dom.minidom
-
-try:
-    from urllib.request import urlopen # Python 3
-    from urllib.error import HTTPError
-except ImportError:
-    from urllib2 import urlopen, HTTPError # Python 2
-
-try:
-    from urllib.parse import urlparse, parse_qs # Python 3
-except ImportError:
-    from urlparse import urlparse, parse_qs # Python 2
 
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, \
                                   getAllSchemaFieldsAndDescriptions, getEmptyValue, \
@@ -1581,7 +1574,7 @@ class BaseView(BrowserView):
 
         # Prepend a static string, in case we want to use REDIS for other cached
         # data
-        return u'CACHED_API__%s' % urllib.urlencode(values)
+        return u'CACHED_API__%s' % urlencode(values)
 
     def getCachedData(self, **kwargs):
 
