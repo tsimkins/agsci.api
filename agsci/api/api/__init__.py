@@ -344,12 +344,11 @@ class BaseView(BrowserView):
             if i not in data:
                 data[i] = indexdata[i]
 
-        data = self.fixData(data)
-
         # Include a pickled brain in data
         if self.showBrain:
-            data['brain'] = b64encode(pickle.dumps(data, protocol=2)).decode('utf-8')
-        return data
+            data['brain'] = b64encode(pickle.dumps(self.fix_value_datatypes(data), protocol=2)).decode('utf-8')
+
+        return self.fixData(data)
 
     def fixData(self, data):
 
@@ -616,7 +615,7 @@ class BaseView(BrowserView):
             # XML type logic sees `zope.i18nmessageid.message.Message` as a list
             # and returns the type one letter at a time as a list.
             elif type(v).__name__ == 'Message':
-                data[k] = safe_unicode(v)
+                data[k] = u'%s' % v
 
             # If this is a file, add additional mimetype info
             elif isinstance(v, NamedBlobFile):
