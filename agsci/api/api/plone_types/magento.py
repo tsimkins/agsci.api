@@ -1,9 +1,11 @@
 from DateTime import DateTime
+from plone.app.uuid.utils import uuidToObject
 from plone.memoize.instance import memoize
 
 from . import PloneSiteView
 from agsci.atlas.constants import EPAS_UNIT_LEADERS, \
     EPAS_TEAM_LEADERS, ACTIVE_REVIEW_STATES
+from agsci.atlas.indexer import IsChildProduct
 from agsci.atlas.cron.jobs.magento import MagentoJob
 from agsci.atlas.utilities import SitePeople, ploneify
 
@@ -314,3 +316,32 @@ class OriginalPloneIdsView(MagentoView):
 
         data.sort(key=lambda x: x.get('target'))
         return data
+
+class ProductImageView(MagentoView):
+
+    showBinary = False
+
+    fields = [
+        'plone_id',
+        'sku',
+        'magento_image_url',
+    ]
+
+    def getData(self, **kwargs):
+
+        data = super(ProductImageView, self).getData(**kwargs)
+        uid = data.get('plone_id')
+
+        if uid:
+            context = uuidToObject(uid)
+
+            if context:
+
+                if IsChildProduct(context)():
+                    context = context.aq_parent
+
+                _uid = context.UID()
+
+                data['magento_image_url'] = self.magento_data.by_plone_id(_uid).get('thumbnail', None)
+
+        return dict([(x, data.get(x, None)) for x in self.fields])

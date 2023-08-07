@@ -32,8 +32,8 @@ class PloneSiteView(BaseView):
         data = {}
 
         # URL parameters
-        uid = self.request.get('UID', self.request.get('uid', None))
-        sku = self.request.get('SKU', self.request.get('sku', None))
+        uid = self.uid
+        sku = self.sku
         modified = self.getModifiedCriteria()
 
         # Query for object having UID, if that parameter is provided
@@ -128,3 +128,11 @@ class PloneSiteView(BaseView):
                 data["contents"].extend(api_view.getShadowData())
 
         return data
+
+    @property
+    def uid(self):
+        return self.request.get('UID', self.request.get('uid', None))
+
+    @property
+    def sku(self):
+        return self.request.get('SKU', self.request.get('sku', None))

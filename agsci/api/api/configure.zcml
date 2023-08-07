@@ -67,6 +67,14 @@
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
+    <browser:page
+        for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+        name="product-image"
+        class=".plone_types.magento.ProductImageView"
+        permission="zope.Public"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
+        />
+
     <!-- Dexterity Image -->
 
     <browser:page
