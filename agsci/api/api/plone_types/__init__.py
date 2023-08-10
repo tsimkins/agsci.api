@@ -1,4 +1,5 @@
 from .. import BaseView
+from agsci.atlas.cron.jobs.magento import MagentoJob
 from agsci.atlas.utilities import toISO
 from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
@@ -26,53 +27,55 @@ class PloneSiteView(BaseView):
     # will be handled separately (in the directory)
     exclude_types = ['Person', ]
 
-    def getData(self, **kwargs):
-
-        # Data structure to return
-        data = {}
-
-        # URL parameters
-        uid = self.uid
-        sku = self.sku
-        modified = self.getModifiedCriteria()
+    def products(self, sku=[], uid=[]):
 
         # Query for object having UID, if that parameter is provided
         if uid:
 
-            results = self.portal_catalog.searchResults({'UID' : uid})
+            return self.portal_catalog.searchResults({'UID' : uid})
 
-            if results:
-                o = results[0].getObject()
-                data = o.restrictedTraverse('@@api').getData()
         # Query for object having SKU, if that parameter is provided
-        if sku:
-
-            def sort_key(_):
-                states = [
-                    'published',
-                    'expiring_soon',
-                    'pending',
-                    'expired',
-                    'private',
-                    'published-inactive',
-                    'archived',
-                ]
-
-                if hasattr(_, 'SKU') and _.SKU in states:
-                    return states.index(_.SKU)
-
-                return 999
+        elif sku:
 
             results = self.portal_catalog.searchResults({
                 'SKU' : sku,
                 'object_provides' : 'agsci.atlas.content.IAtlasProduct',
             })
 
-            results = sorted(results, key=lambda x: sort_key(x))
+            if results:
+
+                # Handle potential duplicate SKUs
+                if len(results) > 1:
+                    skus = [x.SKU for x in results if x.SKU]
+                    mj = self.magento_data
+                    uids = [mj.by_sku(x).get('plone_id') for x in skus]
+                    results = [x for x in results if x.UID in uids]
+
+                return results
+
+    def getData(self, **kwargs):
+
+        # Data structure to return
+        data = {}
+
+        # URL parameters
+        uid = self.uids
+        sku = self.skus
+
+        modified = self.getModifiedCriteria()
+
+        # Query for object having UID(s) or SKU(s), if those parameter are provided
+        if uid or sku:
+
+            results = self.products(uid=uid, sku=sku)
 
             if results:
-                o = results[0].getObject()
-                data = o.restrictedTraverse('@@api').getData()
+
+                return {
+                    'sku' : sku,
+                    'plone_id' : uid,
+                    'contents' : [x.getObject().restrictedTraverse('@@api').getData() for x in results]
+                }
 
         # Otherwise, query for all products updated within X seconds, excluding
         # types configured above
@@ -129,10 +132,24 @@ class PloneSiteView(BaseView):
 
         return data
 
-    @property
-    def uid(self):
-        return self.request.get('UID', self.request.get('uid', None))
+    def fmt_param(self, _):
+
+        if isinstance(_, str):
+
+            if ',' in _:
+                return _.split(',')
+
+        return _
+
 
     @property
-    def sku(self):
-        return self.request.get('SKU', self.request.get('sku', None))
+    def uids(self):
+        return self.fmt_param(self.request.get('UID', self.request.get('uid', self.request.get('plone_id', None))))
+
+    @property
+    def skus(self):
+        return self.fmt_param(self.request.get('SKU', self.request.get('sku', None)))
+
+    @property
+    def magento_data(self):
+        return MagentoJob(self.context)

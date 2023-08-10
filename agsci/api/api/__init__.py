@@ -974,6 +974,7 @@ class BaseView(BrowserView):
 
         # If the 'all' or 'sku' URL parameters were passed, we need to handle
         # the request a little differently.
+
         if self.showAllProducts or self.showSKU:
 
             # Make the data for the API call into a list

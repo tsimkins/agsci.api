@@ -6,16 +6,11 @@ from . import PloneSiteView
 from agsci.atlas.constants import EPAS_UNIT_LEADERS, \
     EPAS_TEAM_LEADERS, ACTIVE_REVIEW_STATES
 from agsci.atlas.indexer import IsChildProduct
-from agsci.atlas.cron.jobs.magento import MagentoJob
 from agsci.atlas.utilities import SitePeople, ploneify
 
 class MagentoView(PloneSiteView):
 
     default_data_format = 'json'
-
-    @property
-    def magento_data(self):
-        return MagentoJob(self.context)
 
 class ExpiringOwnerProducts(MagentoView):
 
@@ -320,6 +315,7 @@ class OriginalPloneIdsView(MagentoView):
 class ProductImageView(MagentoView):
 
     showBinary = False
+    showSKU = False
 
     fields = [
         'plone_id',
@@ -327,12 +323,10 @@ class ProductImageView(MagentoView):
         'magento_image_url',
     ]
 
-    def getData(self, **kwargs):
-
-        data = super(ProductImageView, self).getData(**kwargs)
-        uid = data.get('plone_id')
+    def get_magento_image_url(self, mj=None, uid=None):
 
         if uid:
+
             context = uuidToObject(uid)
 
             if context:
@@ -342,6 +336,25 @@ class ProductImageView(MagentoView):
 
                 _uid = context.UID()
 
-                data['magento_image_url'] = self.magento_data.by_plone_id(_uid).get('thumbnail', None)
+                return mj.by_plone_id(_uid).get('thumbnail', None)
 
-        return dict([(x, data.get(x, None)) for x in self.fields])
+    def getData(self, **kwargs):
+
+        mj = self.magento_data
+
+        data = super(ProductImageView, self).getData(**kwargs)
+
+        _contents = []
+
+        if data:
+
+            for _ in data.get('contents', []):
+                _['magento_image_url'] = self.get_magento_image_url(mj, _.get('plone_id'))
+
+                _contents.append(
+                    dict([(x, _.get(x, None)) for x in self.fields])
+                )
+
+        data['contents'] = _contents
+
+        return data
