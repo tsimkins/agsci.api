@@ -95,4 +95,14 @@
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
+    <!-- Extensionbot -->
+
+    <browser:page
+        for="agsci.atlas.content.IAtlasProduct"
+        name="extensionbot"
+        class=".plone_types.extensionbot.ExtensionBotView"
+        permission="zope.Public"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
+        />
+
 </configure>
