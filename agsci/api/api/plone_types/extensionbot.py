@@ -15,7 +15,7 @@ class ExtensionBotView(PloneSiteView):
     @property
     def wftool(self):
         return getToolByName(self.context, 'portal_workflow')
-    
+
     def getReviewState(self):
         return self.wftool.getInfoFor(self.context, 'review_state')
 
@@ -35,7 +35,13 @@ class ExtensionBotView(PloneSiteView):
             return r.Title
 
     def getAuthors(self):
-        _ = [self.getPersonInfo(x) for x in getattr(self.context.aq_base, 'authors', [])]
+        _ = getattr(self.context.aq_base, 'authors', [])
+
+        if not _:
+            return []
+
+        _ = [self.getPersonInfo(x) for x in _]
+
         _ = [x for x in _ if x]
 
         return _
