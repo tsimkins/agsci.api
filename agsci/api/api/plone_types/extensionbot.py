@@ -64,6 +64,10 @@ class ExtensionBotView(PloneSiteView):
         description = self.context.Description()
 
         html = self.getHTML()
+
+        if not html:
+            return []
+
         soup = BeautifulSoup(html, features="lxml")
 
         # Fix links to other content on the site
