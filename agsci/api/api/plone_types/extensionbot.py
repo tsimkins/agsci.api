@@ -105,6 +105,9 @@ class ExtensionBotView(PloneSiteView):
 
                 _rv[-1]['content_text'] = _rv[-1]['content_text'] + str(el)
 
+        for _ in _rv:
+            if 'content_text' not in _ or not _['content_text']:
+                _['content_text'] = "<p></p>"
 
         return _rv
 
