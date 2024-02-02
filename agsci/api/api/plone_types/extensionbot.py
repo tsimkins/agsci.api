@@ -170,7 +170,7 @@ class ExtensionBotView(PloneSiteView):
             'title' : self.context.Title(),
             'state' : 'PA',
             'link' : magento_url,
-            'share' : True,
+            'share' : False,
             'institution' : 'Penn State Extension',
             'author' : authors,
             'publish_date' : self.context.effective().strftime('%Y-%m-%d'),
