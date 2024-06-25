@@ -38,7 +38,7 @@ import xml.dom.minidom
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, \
                                   getAllSchemaFieldsAndDescriptions, getEmptyValue, \
                                   getBaseSchema, execute_under_special_role, \
-                                  getBodyHTML, get_internal_store_categories
+                                  getBodyHTML, get_internal_store_categories, get_image_info
 
 # Custom Atlas Schemas
 from agsci.atlas.content import atlas_schemas, IAtlasProduct
@@ -55,7 +55,8 @@ from agsci.atlas.content.event.external import IExternalEvent
 from agsci.atlas.content.event.group import IEventGroup
 from agsci.atlas.content.publication import IPublication
 from agsci.atlas.constants import DELIMITER, V_CS, INTERNAL_STORE_CATEGORY_LEVEL_1, \
-                                  INTERNAL_STORE_NAME, EXTERNAL_STORE_NAME, ALLOW_FALSE_VALUES
+                                  INTERNAL_STORE_NAME, EXTERNAL_STORE_NAME, ALLOW_FALSE_VALUES, \
+                                  API_IMAGE_WIDTH
 
 from agsci.atlas.interfaces import IProductContentsAdapter, IHiddenProductCategories
 
@@ -114,6 +115,22 @@ class BaseView(BrowserView):
 
     # Default window for listing updated items
     default_updated = 3600
+
+    # Scale images to width
+    @property
+    def image_width(self):
+        v = self.request.get('width', None)
+
+        if v and isinstance(v, str) and v.isdigit():
+
+            # Cast 'width' parameter to an integer, using the default above
+            # if this fails
+            try:
+                return int(v)
+            except ValueError:
+                pass
+
+        return API_IMAGE_WIDTH
 
     # Registry utility
     @property
@@ -1099,7 +1116,7 @@ class BaseView(BrowserView):
                     img_field_name = 'leadimage'
                     img_field = getattr(self.context, img_field_name, None)
 
-                    (img_mimetype, img_data) = encode_blob(img_field, self.showBinaryData)
+                    (img_mimetype, img_data) = encode_blob(img_field, self.showBinaryData, max_width=self.image_width)
 
                     leadimage_adapted = LeadImage(self.context)
 
@@ -1112,6 +1129,10 @@ class BaseView(BrowserView):
                             'mimetype' : img_mimetype,
                             'caption' : leadimage_adapted.leadimage_caption,
                         }
+
+                        data['leadimage'].update(get_image_info(img_data))
+
+
                 elif self.show_empty_values:
                     data['leadimage'] = {}
                     data['include_lead_image'] = False

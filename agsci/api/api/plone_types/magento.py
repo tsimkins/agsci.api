@@ -320,27 +320,27 @@ class ProductImageView(MagentoView):
     fields = [
         'plone_id',
         'sku',
-        'magento_image_url',
+        'leadimage',
     ]
 
-    def get_magento_image_url(self, mj=None, uid=None):
+    # If given a child product, return parent image information.
+    def products(self, **kwargs):
 
-        if uid:
+        results = super(ProductImageView, self).products(**kwargs)
 
-            context = uuidToObject(uid)
+        parent_results = [x for x in results if not x.IsChildProduct]
+        child_results = [x for x in results if x.IsChildProduct]
 
-            if context:
+        if child_results:
+            parent_uids = [x.getObject().aq_parent.UID() for x in child_results]
+            parent_results.extend([x for x in self.portal_catalog.searchResults({
+                'object_provides' : 'agsci.atlas.content.IAtlasProduct',
+                'UID' : parent_uids,
+            })])
 
-                if IsChildProduct(context)():
-                    context = context.aq_parent
-
-                _uid = context.UID()
-
-                return mj.by_plone_id(_uid).get('thumbnail', None)
+        return parent_results
 
     def getData(self, **kwargs):
-
-        mj = self.magento_data
 
         data = super(ProductImageView, self).getData(**kwargs)
 
@@ -349,7 +349,6 @@ class ProductImageView(MagentoView):
         if data:
 
             for _ in data.get('contents', []):
-                _['magento_image_url'] = self.get_magento_image_url(mj, _.get('plone_id'))
 
                 _contents.append(
                     dict([(x, _.get(x, None)) for x in self.fields])
