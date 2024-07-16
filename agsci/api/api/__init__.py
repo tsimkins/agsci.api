@@ -1,6 +1,5 @@
 from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
-from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from base64 import b64encode
 from plone.app.textfield.value import RichTextValue
@@ -16,6 +15,11 @@ from zope.component import getAdapters, getMultiAdapter, getUtility
 from zope.component.hooks import getSite
 from zope.interface import implementer
 from zope.publisher.interfaces import IPublishTraverse
+
+try:
+    from plone.base.utils import safe_text as safe_unicode
+except ImportError:
+    from Products.CMFPlone.utils import safe_unicode
 
 try:
     from urllib.parse import urlencode, parse_qsl, urlunparse, urlparse, parse_qs # Python 3
