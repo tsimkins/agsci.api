@@ -205,7 +205,7 @@ class SampleAPIView(PloneSiteView):
         portal_type = pt.getId()
 
         # Check if type is allowed
-        allowed_content_types = [x.getId() for x in root.getAllowedTypes()]
+        allowed_content_types = [x.getId() for x in root.allowedContentTypes()]
 
         # Override for root folder (only structures)
         if root.portal_type == 'Folder':
