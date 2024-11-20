@@ -2,6 +2,7 @@ from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
 from base64 import b64encode
+from persistent.mapping import PersistentMapping
 from plone.app.textfield.value import RichTextValue
 from plone.namedfile.file import NamedBlobFile
 from agsci.leadimage.content.behaviors import LeadImage
@@ -472,6 +473,7 @@ class BaseView(BrowserView):
             'program_team',
             'state_extension_team',
             'internal_store_categories',
+            'image_scales',
         ]
 
         if self.isChildProduct() or not self.isProduct():
@@ -648,7 +650,7 @@ class BaseView(BrowserView):
                         v[i] = self.fix_value_datatypes(dict(v[i]))
 
             # If it's a dict, run this routine on that dict.
-            elif isinstance(v, dict):
+            elif isinstance(v, (dict, PersistentMapping)):
                 data[k] = self.fix_value_datatypes(dict(data[k]))
 
             # If it's rich text, convert to HTML.
