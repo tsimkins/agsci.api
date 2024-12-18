@@ -152,8 +152,8 @@ class ExpiringOwnerProducts(MagentoView):
                     'plone_url' : r.getURL(),
                     'name' : r.Title,
                     'primary_team' : epas_primary_team,
-                    'unit' : ";".join(r.EPASUnit),
-                    'team' : ";".join(r.EPASTeam),
+                    'unit' : ";".join(r.EPASUnit and r.EPASUnit or []),
+                    'team' : ";".join(r.EPASTeam and r.EPASTeam or []),
                     'original_owners' : [self.get_user_structure(sp.getPersonById(x)) for x in _owners],
                     'new_owners' : [self.get_user_structure(sp.getPersonById(x)) for x in owners],
                 })
