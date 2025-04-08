@@ -149,13 +149,40 @@ class ExtensionBotView(PloneSiteView):
         return review_state in ACTIVE_REVIEW_STATES
 
     @property
+    def sku(self):
+        return getattr(self.context.aq_base, 'sku', None)
+
+    # Get videos that are hidden, but in a series
+    @property
+    def video_series_skus(self):
+        _rv = []
+
+        results = self.portal_catalog.searchResults({
+            'Type' : ['Learn Now Video Series'],
+            'review_state' : ACTIVE_REVIEW_STATES,
+        })
+
+        for r in results:
+            o = r.getObject()
+            v = o.restrictedTraverse('@@extensionbot-psu')
+            if v.include and v.current:
+                _rv.extend([x.get('sku', None) for x in getattr(o.aq_base, 'videos') if x.get('sku', None)])
+
+        return sorted(set(_rv))
+
+    @property
     def include(self):
 
         hide_product = getattr(self.context.aq_base, 'hide_product', False)
         product_not_visible = getattr(self.context.aq_base, 'product_not_visible', False)
-        # Exclude hidden products
+
+        # Exclude hidden products except videos in series
         if hide_product or product_not_visible:
-            return False
+            if IVideo.providedBy(self.context):
+                if self.sku not in self.video_series_skus:
+                    return False
+            else:
+                return False
 
         # Exclude products without categories
         if not self.getCategories():
@@ -163,6 +190,10 @@ class ExtensionBotView(PloneSiteView):
 
         # Exclude products without a URL
         if not self.getPublicURL():
+            return False
+
+        # Exclude with no SKU
+        if not self.sku:
             return False
 
         return True
@@ -187,6 +218,7 @@ class ExtensionBotView(PloneSiteView):
             'content_type' : 'HTML',
             'content' : self.getContent(),
             'category' : categories,
+            'publication_id' : self.sku,
         }
 
         return _rv
@@ -194,11 +226,16 @@ class ExtensionBotView(PloneSiteView):
 class ExtensionBotPSUView(ExtensionBotView):
 
     def getData(self, **kwargs):
+
         _rv = super(ExtensionBotPSUView, self).getData(**kwargs)
-        api_view = self.context.restrictedTraverse('@@api')
-        api_data = api_view.getData()
-        merge_keys = ['product_type', 'video_url', 'language']
-        for k in merge_keys:
-            if k in api_data and api_data[k]:
-                _rv[k] = api_data[k]
-        return _rv
+
+        if _rv:
+            api_view = self.context.restrictedTraverse('@@api')
+            api_data = api_view.getData()
+            merge_keys = ['product_type', 'video_url', 'language']
+            for k in merge_keys:
+                if k in api_data and api_data[k]:
+                    _rv[k] = api_data[k]
+            return _rv
+
+        return {}
