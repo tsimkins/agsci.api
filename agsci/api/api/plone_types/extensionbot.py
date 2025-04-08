@@ -7,6 +7,7 @@ from agsci.atlas.constants import DELIMITER, ACTIVE_REVIEW_STATES
 from agsci.atlas.utilities import SitePeople, ploneify, getBodyHTML
 from agsci.atlas.content.pdf import AutoPDF
 from agsci.atlas.content.article import IArticle
+from agsci.atlas.content.video import IVideo
 
 class ExtensionBotView(PloneSiteView):
 
@@ -56,6 +57,15 @@ class ExtensionBotView(PloneSiteView):
 
         if IArticle.providedBy(self.context):
             return self.pdf_view.getArticleHTML()
+
+        elif IVideo.providedBy(self.context):
+            # Combine transcript with body html
+            if hasattr(self.context, 'transcript') and \
+               hasattr(self.context.transcript, 'output') and \
+               self.context.transcript.output:
+                    transcript = self.context.transcript.output
+                    html = getBodyHTML(self.context)
+                    return " ".join([x for x in (html, transcript) if x])
 
         return getBodyHTML(self.context)
 
