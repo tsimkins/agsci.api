@@ -211,7 +211,7 @@ class ExtensionBotView(PloneSiteView):
             'title' : self.context.Title(),
             'state' : 'PA',
             'link' : magento_url,
-            'share' : False,
+            'share' : self.include,
             'institution' : 'Penn State Extension',
             'author' : authors,
             'publish_date' : self.context.effective().strftime('%Y-%m-%d'),
@@ -227,15 +227,28 @@ class ExtensionBotPSUView(ExtensionBotView):
 
     def getData(self, **kwargs):
 
+        if not self.include:
+            return {
+                'active' : self.include,
+                'publication_id' : self.sku,
+            }
+
         _rv = super(ExtensionBotPSUView, self).getData(**kwargs)
 
         if _rv:
             api_view = self.context.restrictedTraverse('@@api')
             api_data = api_view.getData()
             merge_keys = ['product_type', 'video_id', 'language']
+
             for k in merge_keys:
                 if k in api_data and api_data[k]:
                     _rv[k] = api_data[k]
+
+            _rv['active'] = self.include
+
+            if 'share' in _rv:
+                del _rv['share']
+
             return _rv
 
         return {}
