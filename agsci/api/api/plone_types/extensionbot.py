@@ -215,6 +215,7 @@ class ExtensionBotView(PloneSiteView):
             'institution' : 'Penn State Extension',
             'author' : authors,
             'publish_date' : self.context.effective().strftime('%Y-%m-%d'),
+            'modified_date' : self.context.modified().strftime('%Y-%m-%dT%H:%M:%S'),
             'content_type' : 'HTML',
             'content' : self.getContent(),
             'category' : categories,
