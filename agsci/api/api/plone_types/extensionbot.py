@@ -244,7 +244,7 @@ class ExtensionBotPSUView(ExtensionBotView):
                 if k in api_data and api_data[k]:
                     _rv[k] = api_data[k]
 
-            _rv['active'] = self.include
+            _rv['active'] = self.active
 
             if 'share' in _rv:
                 del _rv['share']
