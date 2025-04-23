@@ -228,9 +228,9 @@ class ExtensionBotPSUView(ExtensionBotView):
 
     def getData(self, **kwargs):
 
-        if not self.include:
+        if not self.active:
             return {
-                'active' : self.include,
+                'active' : self.active,
                 'publication_id' : self.sku,
             }
 
