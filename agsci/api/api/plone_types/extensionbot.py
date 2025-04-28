@@ -239,7 +239,7 @@ class ExtensionBotPSUView(ExtensionBotView):
         if _rv:
             api_view = self.context.restrictedTraverse('@@api')
             api_data = api_view.getData()
-            merge_keys = ['product_type', 'video_id', 'language']
+            merge_keys = ['product_type', 'video_id', 'language', 'alternate_language']
 
             for k in merge_keys:
                 if k in api_data and api_data[k]:
