@@ -232,6 +232,7 @@ class ExtensionBotPSUView(ExtensionBotView):
             return {
                 'active' : self.active,
                 'publication_id' : self.sku,
+                'modified_date' : self.context.modified().strftime('%Y-%m-%dT%H:%M:%S'),
             }
 
         _rv = super(ExtensionBotPSUView, self).getData(**kwargs)
