@@ -130,11 +130,19 @@ class ExtensionBotView(PloneSiteView):
         _.update(kwargs)
         return _
 
-    def getCategories(self):
+    def getL1Categories(self):
+        _ = getattr(self.context.aq_base, 'atlas_category_level_1', [])
+        if _:
+            _ = [x.split(DELIMITER)[-1] for x in _]
+            return sorted(set([x for x in _ if x]))
+        return []
+
+    def getL2Categories(self):
         _ = getattr(self.context.aq_base, 'atlas_category_level_2', [])
         if _:
             _ = [x.split(DELIMITER)[-1] for x in _]
             return sorted(set([x for x in _ if x]))
+        return []
 
     # Does the data in the CMS match the data on the live site?
     @property
@@ -147,6 +155,14 @@ class ExtensionBotView(PloneSiteView):
     def active(self):
         review_state = self.getReviewState()
         return review_state in ACTIVE_REVIEW_STATES
+
+    @property
+    def hidden(self):
+        return getattr(self.context.aq_base, 'hide_product', False)
+
+    @property
+    def product_not_visible(self):
+        return getattr(self.context.aq_base, 'hide_product', False)
 
     @property
     def sku(self):
@@ -173,8 +189,8 @@ class ExtensionBotView(PloneSiteView):
     @property
     def include(self):
 
-        hide_product = getattr(self.context.aq_base, 'hide_product', False)
-        product_not_visible = getattr(self.context.aq_base, 'product_not_visible', False)
+        hide_product = self.hidden
+        product_not_visible = self.product_not_visible
 
         # Exclude hidden products except videos in series
         if hide_product or product_not_visible:
@@ -185,8 +201,17 @@ class ExtensionBotView(PloneSiteView):
                 return False
 
         # Exclude products without categories
-        if not self.getCategories():
-            return False
+        l1_categories = self.getL1Categories()
+        l2_categories = self.getL2Categories()
+
+        # Skip products without L2 categories
+        if not self.getL2Categories():
+
+            # ... unless Extension Products is in the L1
+            if l1_categories and 'Extension Products' in l1_categories:
+                pass
+            else:
+                return False
 
         # Exclude products without a URL
         if not self.getPublicURL():
@@ -205,7 +230,7 @@ class ExtensionBotView(PloneSiteView):
 
         magento_url = self.getPublicURL()
         authors = self.getAuthors()
-        categories = self.getCategories()
+        categories = self.getL2Categories()
 
         _rv = {
             'title' : self.context.Title(),
@@ -228,9 +253,9 @@ class ExtensionBotPSUView(ExtensionBotView):
 
     def getData(self, **kwargs):
 
-        if not self.active:
+        if self.hidden or self.product_not_visible or not self.active:
             return {
-                'active' : self.active,
+                'active' : False,
                 'publication_id' : self.sku,
                 'modified_date' : self.context.modified().strftime('%Y-%m-%dT%H:%M:%S'),
             }
