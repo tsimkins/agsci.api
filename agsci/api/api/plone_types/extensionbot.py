@@ -251,6 +251,7 @@ class ExtensionBotView(PloneSiteView):
 
 class ExtensionBotPSUView(ExtensionBotView):
 
+
     def getData(self, **kwargs):
 
         if self.hidden or self.product_not_visible or not self.active:
@@ -260,7 +261,25 @@ class ExtensionBotPSUView(ExtensionBotView):
                 'modified_date' : self.context.modified().strftime('%Y-%m-%dT%H:%M:%S'),
             }
 
-        _rv = super(ExtensionBotPSUView, self).getData(**kwargs)
+
+        magento_url = self.getPublicURL()
+        authors = self.getAuthors()
+        categories = self.getL2Categories()
+
+        _rv = {
+            'title' : self.context.Title(),
+            'state' : 'PA',
+            'link' : magento_url,
+            'share' : self.include,
+            'institution' : 'Penn State Extension',
+            'author' : authors,
+            'publish_date' : self.context.effective().strftime('%Y-%m-%d'),
+            'modified_date' : self.context.modified().strftime('%Y-%m-%dT%H:%M:%S'),
+            'content_type' : 'HTML',
+            'content' : self.getContent(),
+            'category' : categories,
+            'publication_id' : self.sku,
+        }
 
         if _rv:
             api_view = self.context.restrictedTraverse('@@api')
