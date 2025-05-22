@@ -1,13 +1,19 @@
 from Products.CMFCore.utils import getToolByName
 from bs4 import BeautifulSoup
+from plone.app.textfield.value import RichTextValue
 
 from . import PloneSiteView
+
+import re
 
 from agsci.atlas.constants import DELIMITER, ACTIVE_REVIEW_STATES
 from agsci.atlas.utilities import SitePeople, ploneify, getBodyHTML
 from agsci.atlas.content.pdf import AutoPDF
 from agsci.atlas.content.article import IArticle
 from agsci.atlas.content.video import IVideo
+from agsci.atlas.content.event.group import IEventGroup
+from agsci.atlas.content.behaviors import IAtlasAudience, IAtlasAudienceSkillLevel
+from agsci.atlas.cron.jobs.magento import MagentoJob
 
 class ExtensionBotView(PloneSiteView):
 
@@ -66,6 +72,30 @@ class ExtensionBotView(PloneSiteView):
                     transcript = self.context.transcript.output
                     html = getBodyHTML(self.context)
                     return " ".join([x for x in (html, transcript) if x])
+        elif IEventGroup.providedBy(self.context):
+            html = getBodyHTML(self.context)
+            audience_html = []
+
+            for iface in (IAtlasAudience, IAtlasAudienceSkillLevel):
+                for (_name, _desc) in iface.namesAndDescriptions():
+                    v = getattr(self.context.aq_base, _name, None)
+
+                    if v:
+                        if isinstance(v, RichTextValue):
+                            v = v.output
+
+                        if isinstance(v, str):
+                            audience_html.append(
+                                "<h2>%s</h2>%s" % (_desc.title, v)
+                            )
+                        elif isinstance(v, (list,tuple)):
+                            items = ["<li>%s</li>" % x for x in v]
+                            items_html = "<ul>%s</ul>" % " ".join(items)
+                            audience_html.append(
+                                "<h2>%s</h2>%s" % (_desc.title, items_html)
+                            )
+
+            return " ".join([x for x in (html, " ".join(audience_html)) if x])                    
 
         return getBodyHTML(self.context)
 
@@ -77,6 +107,9 @@ class ExtensionBotView(PloneSiteView):
 
         if not html:
             return []
+
+        # Remove spans
+        html = re.sub(r'</*span.*?>', '', html)
 
         soup = BeautifulSoup(html, features="lxml")
 
@@ -251,16 +284,41 @@ class ExtensionBotView(PloneSiteView):
 
 class ExtensionBotPSUView(ExtensionBotView):
 
+    api_merge_keys = ['product_type', 'video_id', 'language', 'alternate_language']
+    parent_merge_keys = []
+
+    @property
+    def modified(self):
+        return self.context.modified().strftime('%Y-%m-%dT%H:%M:%S')
+
+    def map_product_type(self, _):
+        return _
+
+    @property
+    def parent_extensionbot_view(self):
+        return self.context.aq_parent.restrictedTraverse('@@extensionbot-psu')
+
+    @property
+    def parent_extensionbot_data(self):
+        return self.parent_extensionbot_view.getData()
+
+    @property
+    def api_data(self):
+        api_view = self.context.restrictedTraverse('@@api')
+        return api_view.getData()
+
+    @property
+    def null_record(self):
+        return self.hidden or self.product_not_visible or not self.active
 
     def getData(self, **kwargs):
 
-        if self.hidden or self.product_not_visible or not self.active:
+        if self.null_record:
             return {
                 'active' : False,
                 'publication_id' : self.sku,
-                'modified_date' : self.context.modified().strftime('%Y-%m-%dT%H:%M:%S'),
+                'modified_date' : self.modified,
             }
-
 
         magento_url = self.getPublicURL()
         authors = self.getAuthors()
@@ -274,7 +332,7 @@ class ExtensionBotPSUView(ExtensionBotView):
             'institution' : 'Penn State Extension',
             'author' : authors,
             'publish_date' : self.context.effective().strftime('%Y-%m-%d'),
-            'modified_date' : self.context.modified().strftime('%Y-%m-%dT%H:%M:%S'),
+            'modified_date' : self.modified,
             'content_type' : 'HTML',
             'content' : self.getContent(),
             'category' : categories,
@@ -282,15 +340,26 @@ class ExtensionBotPSUView(ExtensionBotView):
         }
 
         if _rv:
-            api_view = self.context.restrictedTraverse('@@api')
-            api_data = api_view.getData()
-            merge_keys = ['product_type', 'video_id', 'language', 'alternate_language']
 
-            for k in merge_keys:
-                if k in api_data and api_data[k]:
-                    _rv[k] = api_data[k]
+            if self.api_merge_keys:
+                api_data = self.api_data
+    
+                for k in self.api_merge_keys:
+                    if k in api_data and api_data[k]:
+                        _rv[k] = api_data[k]
+
+            if self.parent_merge_keys:
+                parent_data = self.parent_extensionbot_data
+                
+                if parent_data and 'publication_id' in parent_data:
+                    _rv['parent_publication_id'] = parent_data['publication_id']
+
+                for k in self.parent_merge_keys:
+                    if k in parent_data and parent_data[k]:
+                        _rv[k] = parent_data[k]
 
             _rv['active'] = self.active
+            _rv['product_type'] = self.map_product_type(_rv.get('product_type', None))
 
             if 'share' in _rv:
                 del _rv['share']
@@ -298,3 +367,55 @@ class ExtensionBotPSUView(ExtensionBotView):
             return _rv
 
         return {}
+
+class ExtensionBotPSUCventEventView(ExtensionBotPSUView):
+
+    api_merge_keys = [
+        'price', 
+        'latitude', 
+        'longitude', 
+        'address', 
+        'city', 
+        'state', 
+        'zip',
+        'county',
+        'event_start_date',
+        'event_end_date',
+        'registration_deadline',
+        ]
+
+    parent_merge_keys = ['language', 'active', 'content', 'title', ]
+
+    @property
+    def modified(self):
+        return sorted([self.context.modified(), self.context.aq_parent.modified()])[-1].strftime('%Y-%m-%dT%H:%M:%S')
+
+    @property
+    def entity_id(self):
+        mj = MagentoJob(self.context)
+        uid = self.context.UID()
+        return mj.by_plone_id(uid).get('entity_id')
+
+    def getPublicURL(self):
+        magento_url = getattr(self.context.aq_parent, 'magento_url', None)
+
+        if magento_url:
+            entity_id = self.entity_id
+            if entity_id:
+                return 'https://extension.psu.edu/%s?entity=%s' % (magento_url, entity_id)
+            return magento_url
+
+    @property
+    def null_record(self):
+        if not super(ExtensionBotPSUCventEventView, self).null_record:
+            return self.parent_extensionbot_view.null_record
+        return True
+
+    def map_product_type(self, _):
+        return getattr(self.context.aq_base, 'atlas_event_type', _)
+
+    def getData(self, **kwargs):
+        _rv = super(ExtensionBotPSUCventEventView, self).getData(**kwargs)
+        if 'county' in _rv and _rv['county'] and isinstance(_rv['county'], (list, tuple)):
+            _rv['county'] = _rv['county'][0]
+        return _rv
