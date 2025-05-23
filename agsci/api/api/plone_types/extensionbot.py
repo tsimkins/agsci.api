@@ -12,6 +12,7 @@ from agsci.atlas.content.pdf import AutoPDF
 from agsci.atlas.content.article import IArticle
 from agsci.atlas.content.video import IVideo
 from agsci.atlas.content.event.group import IEventGroup
+from agsci.atlas.content.online_course.group import IOnlineCourseGroup
 from agsci.atlas.content.behaviors import IAtlasAudience, IAtlasAudienceSkillLevel
 from agsci.atlas.cron.jobs.magento import MagentoJob
 
@@ -72,7 +73,7 @@ class ExtensionBotView(PloneSiteView):
                     transcript = self.context.transcript.output
                     html = getBodyHTML(self.context)
                     return " ".join([x for x in (html, transcript) if x])
-        elif IEventGroup.providedBy(self.context):
+        elif IEventGroup.providedBy(self.context) or IOnlineCourseGroup.providedBy(self.context):
             html = getBodyHTML(self.context)
             audience_html = []
 
