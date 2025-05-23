@@ -108,8 +108,12 @@ class ExtensionBotView(PloneSiteView):
         if not html:
             return []
 
-        # Remove spans
-        html = re.sub(r'</*span.*?>', '', html)
+        # Remove divs and spans
+        html = re.sub(r'</*(div|span).*?>', '', html)
+
+        # Remove attributes
+        for _ in ['id', 'class', 'style', 'data-cvent-id']:
+            html = re.sub(r' %s=".*?"' % _, '', html)
 
         soup = BeautifulSoup(html, features="lxml")
 
@@ -284,7 +288,14 @@ class ExtensionBotView(PloneSiteView):
 
 class ExtensionBotPSUView(ExtensionBotView):
 
-    api_merge_keys = ['product_type', 'video_id', 'language', 'alternate_language']
+    api_merge_keys = [
+        'product_type',
+        'video_id',
+        'language',
+        'alternate_language',
+        'continuing_education_credits',
+        'cvent_event_format',
+    ]
 
     @property
     def modified(self):
@@ -375,12 +386,12 @@ class ExtensionBotPSUOnlineCourseGroupView(ExtensionBotPSUView):
             v = o.restrictedTraverse('@@extensionbot-psu')
             if v.active:
                 _ = getattr(o.aq_base, 'price', None)
-    
+
                 if _:
                     _rv['price'] = '%0.2f' % _
 
-                _rv['author'] = v.getAuthors()    
-    
+                _rv['author'] = v.getAuthors()
+
         return _rv
 
 class ExtensionBotPSUCventEventView(ExtensionBotPSUView):
@@ -398,7 +409,14 @@ class ExtensionBotPSUCventEventView(ExtensionBotPSUView):
         'registration_deadline',
         ]
 
-    parent_merge_keys = ['language', 'active', 'content', 'title', ]
+    parent_merge_keys = [
+        'language',
+        'active',
+        'content',
+        'title',
+        'continuing_education_credits',
+        'cvent_event_format',
+    ]
 
     @property
     def additional_fields(self):
@@ -412,7 +430,7 @@ class ExtensionBotPSUCventEventView(ExtensionBotPSUView):
         county = getattr(self.context.aq_base, 'county', None)
 
         if county and county and isinstance(county, (list, tuple)):
-            _rv['county'] = county[0]
+            _rv['county'] = county
 
         if self.parent_merge_keys:
             parent_data = self.parent_extensionbot_data
