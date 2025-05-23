@@ -425,7 +425,7 @@ class ExtensionBotPSUCventEventView(ExtensionBotPSUView):
         product_type = getattr(self.context.aq_base, 'atlas_event_type', None)
 
         if product_type:
-            _rv['product_type'] = product_type[0],
+            _rv['product_type'] = product_type
 
         county = getattr(self.context.aq_base, 'county', None)
 
