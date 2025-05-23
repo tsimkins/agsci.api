@@ -294,6 +294,7 @@ class ExtensionBotPSUView(ExtensionBotView):
         'language',
         'alternate_language',
         'continuing_education_credits',
+        'credit_category_filter',
         'cvent_event_format',
     ]
 
@@ -417,6 +418,7 @@ class ExtensionBotPSUCventEventView(ExtensionBotPSUView):
         'content',
         'title',
         'continuing_education_credits',
+        'credit_category_filter',
         'cvent_event_format',
     ]
 
@@ -432,7 +434,7 @@ class ExtensionBotPSUCventEventView(ExtensionBotPSUView):
         county = getattr(self.context.aq_base, 'county', None)
 
         if county and county and isinstance(county, (list, tuple)):
-            _rv['county'] = county
+            _rv['county'] = county[0]
 
         if self.parent_merge_keys:
             parent_data = self.parent_extensionbot_data
