@@ -95,7 +95,7 @@ class ExtensionBotView(PloneSiteView):
                                 "<h2>%s</h2>%s" % (_desc.title, items_html)
                             )
 
-            return " ".join([x for x in (html, " ".join(audience_html)) if x])                    
+            return " ".join([x for x in (html, " ".join(audience_html)) if x])
 
         return getBodyHTML(self.context)
 
@@ -285,14 +285,10 @@ class ExtensionBotView(PloneSiteView):
 class ExtensionBotPSUView(ExtensionBotView):
 
     api_merge_keys = ['product_type', 'video_id', 'language', 'alternate_language']
-    parent_merge_keys = []
 
     @property
     def modified(self):
         return self.context.modified().strftime('%Y-%m-%dT%H:%M:%S')
-
-    def map_product_type(self, _):
-        return _
 
     @property
     def parent_extensionbot_view(self):
@@ -310,6 +306,10 @@ class ExtensionBotPSUView(ExtensionBotView):
     @property
     def null_record(self):
         return self.hidden or self.product_not_visible or not self.active
+
+    @property
+    def additional_fields(self):
+        return {}
 
     def getData(self, **kwargs):
 
@@ -343,23 +343,14 @@ class ExtensionBotPSUView(ExtensionBotView):
 
             if self.api_merge_keys:
                 api_data = self.api_data
-    
+
                 for k in self.api_merge_keys:
                     if k in api_data and api_data[k]:
                         _rv[k] = api_data[k]
 
-            if self.parent_merge_keys:
-                parent_data = self.parent_extensionbot_data
-                
-                if parent_data and 'publication_id' in parent_data:
-                    _rv['parent_publication_id'] = parent_data['publication_id']
-
-                for k in self.parent_merge_keys:
-                    if k in parent_data and parent_data[k]:
-                        _rv[k] = parent_data[k]
-
             _rv['active'] = self.active
-            _rv['product_type'] = self.map_product_type(_rv.get('product_type', None))
+
+            _rv.update(self.additional_fields)
 
             if 'share' in _rv:
                 del _rv['share']
@@ -368,23 +359,72 @@ class ExtensionBotPSUView(ExtensionBotView):
 
         return {}
 
+class ExtensionBotPSUOnlineCourseGroupView(ExtensionBotPSUView):
+
+    @property
+    def additional_fields(self):
+
+        _rv = {}
+
+        children = self.context.listFolderContents({'Type' : 'Online Course'})
+        children = [x for x in children if self.wftool.getInfoFor(x, 'review_state') in ACTIVE_REVIEW_STATES]
+
+        if children:
+            children.sort(key=lambda x: x.effective())
+            o = children[-1]
+            v = o.restrictedTraverse('@@extensionbot-psu')
+            if v.active:
+                _ = getattr(o.aq_base, 'price', None)
+    
+                if _:
+                    _rv['price'] = '%0.2f' % _
+
+                _rv['author'] = v.getAuthors()    
+    
+        return _rv
+
 class ExtensionBotPSUCventEventView(ExtensionBotPSUView):
 
     api_merge_keys = [
-        'price', 
-        'latitude', 
-        'longitude', 
-        'address', 
-        'city', 
-        'state', 
+        'price',
+        'latitude',
+        'longitude',
+        'address',
+        'city',
+        'state',
         'zip',
-        'county',
         'event_start_date',
         'event_end_date',
         'registration_deadline',
         ]
 
     parent_merge_keys = ['language', 'active', 'content', 'title', ]
+
+    @property
+    def additional_fields(self):
+        _rv = {}
+
+        product_type = getattr(self.context.aq_base, 'atlas_event_type', None)
+
+        if product_type:
+            _rv['product_type'] = product_type,
+
+        county = getattr(self.context.aq_base, 'county', None)
+
+        if county and county and isinstance(county, (list, tuple)):
+            _rv['county'] = county[0]
+
+        if self.parent_merge_keys:
+            parent_data = self.parent_extensionbot_data
+
+            if parent_data and 'publication_id' in parent_data:
+                _rv['parent_publication_id'] = parent_data['publication_id']
+
+            for k in self.parent_merge_keys:
+                if k in parent_data and parent_data[k]:
+                    _rv[k] = parent_data[k]
+
+        return _rv
 
     @property
     def modified(self):
@@ -410,12 +450,3 @@ class ExtensionBotPSUCventEventView(ExtensionBotPSUView):
         if not super(ExtensionBotPSUCventEventView, self).null_record:
             return self.parent_extensionbot_view.null_record
         return True
-
-    def map_product_type(self, _):
-        return getattr(self.context.aq_base, 'atlas_event_type', _)
-
-    def getData(self, **kwargs):
-        _rv = super(ExtensionBotPSUCventEventView, self).getData(**kwargs)
-        if 'county' in _rv and _rv['county'] and isinstance(_rv['county'], (list, tuple)):
-            _rv['county'] = _rv['county'][0]
-        return _rv
