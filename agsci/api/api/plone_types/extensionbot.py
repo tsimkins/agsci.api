@@ -375,7 +375,9 @@ class ExtensionBotPSUOnlineCourseGroupView(ExtensionBotPSUView):
     @property
     def additional_fields(self):
 
-        _rv = {}
+        _rv = {
+            'product_type' : 'Online Course',
+        }
 
         children = self.context.listFolderContents({'Type' : 'Online Course'})
         children = [x for x in children if self.wftool.getInfoFor(x, 'review_state') in ACTIVE_REVIEW_STATES]
