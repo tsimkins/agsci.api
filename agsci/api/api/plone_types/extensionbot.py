@@ -416,6 +416,7 @@ class ExtensionBotPersonView(ExtensionBotPSUView):
         'Client Relationship Manager',
         'Business Operations Manager',
         'Leadership Team',
+        'Staff',
     ]
 
     @property
