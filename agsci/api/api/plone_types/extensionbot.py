@@ -403,6 +403,7 @@ class ExtensionBotPersonView(ExtensionBotPSUView):
         'person_job_title',
         'person_classification',
         'phone',
+        'county',
     ]
 
     include_classifications = [
