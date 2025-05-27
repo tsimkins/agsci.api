@@ -15,6 +15,7 @@ from agsci.atlas.content.event.group import IEventGroup
 from agsci.atlas.content.online_course.group import IOnlineCourseGroup
 from agsci.atlas.content.behaviors import IAtlasAudience, IAtlasAudienceSkillLevel
 from agsci.atlas.cron.jobs.magento import MagentoJob
+from agsci.person.content.person import IPerson
 
 class ExtensionBotView(PloneSiteView):
 
@@ -73,6 +74,7 @@ class ExtensionBotView(PloneSiteView):
                     transcript = self.context.transcript.output
                     html = getBodyHTML(self.context)
                     return " ".join([x for x in (html, transcript) if x])
+
         elif IEventGroup.providedBy(self.context) or IOnlineCourseGroup.providedBy(self.context):
             html = getBodyHTML(self.context)
             audience_html = []
@@ -97,6 +99,28 @@ class ExtensionBotView(PloneSiteView):
                             )
 
             return " ".join([x for x in (html, " ".join(audience_html)) if x])
+
+        elif IPerson.providedBy(self.context):
+
+            html = []
+
+            bio = getattr(self.context.aq_base, 'bio', None)
+
+            if bio:
+                if isinstance(bio, str) and bio.strip():
+                    html.append(bio)
+                elif isinstance(bio, RichTextValue) and bio.output:
+                    html.append(bio.output)
+
+            areas_expertise = getattr(self.context.aq_base, 'areas_expertise', [])
+
+            if areas_expertise:
+                html.append('<h2>Expertise</h2>')
+                items = ["<li>%s</li>" % x for x in areas_expertise]
+                items_html = "<ul>%s</ul>" % " ".join(items)
+                html.append(items_html)
+
+            return " ".join(html)
 
         return getBodyHTML(self.context)
 
@@ -371,6 +395,85 @@ class ExtensionBotPSUView(ExtensionBotView):
             return _rv
 
         return {}
+
+class ExtensionBotPersonView(ExtensionBotPSUView):
+
+    api_merge_keys = [
+        'email_address',
+        'person_job_title',
+        'person_classification',
+        'phone',
+    ]
+
+    include_classifications = [
+        'Faculty',
+        'Educator',
+        'Director',
+        'Associate Director',
+        'Assistant Director of Programs',
+        'Assistant Director for County Operations',
+        'Client Relationship Manager',
+        'Business Operations Manager',
+        'Leadership Team',
+    ]
+
+    @property
+    def hidden(self):
+        # Only include educators and faculty
+        classifications = getattr(self.context.aq_base, 'classifications', [])
+        if classifications:
+            if any([x in classifications for x in self.include_classifications]):
+                return False
+        return True
+
+    def getCountyInfo(self, county):
+
+        if county == 'University Park':
+
+            # Hardcoded to Ag Admin
+            return {
+                'latitude' : '40.80249888',
+                'longitude' : '-77.86382496',
+            }
+
+        elif county:
+
+            results = self.portal_catalog.searchResults({
+                'Type' : 'County',
+                'Title' : county
+            })
+
+            for r in results:
+                o = r.getObject()
+                v = o.restrictedTraverse('@@api')
+                _ = v.getData()
+
+                return {
+                    'latitude' : _.get('latitude', None),
+                    'longitude' : _.get('longitude', None),
+                }
+
+        return {}
+
+    @property
+    def county_info(self):
+        county = getattr(self.context.aq_base, 'county', [])
+
+        if county:
+            return self.getCountyInfo(county[0])
+
+        return {}
+
+    @property
+    def additional_fields(self):
+
+        _rv = {
+            'product_type' : 'Person',
+        }
+
+        _rv.update(self.county_info)
+
+        return _rv
 
 class ExtensionBotPSUOnlineCourseGroupView(ExtensionBotPSUView):
 

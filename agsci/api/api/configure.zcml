@@ -133,4 +133,13 @@
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
+    <!-- Extensionbot PSU for Person -->
+    <browser:page
+        for="agsci.person.content.person.IPerson"
+        name="extensionbot-psu"
+        class=".plone_types.extensionbot.ExtensionBotPersonView"
+        permission="zope.Public"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
+        />
+
 </configure>
