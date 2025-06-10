@@ -12,6 +12,7 @@ from agsci.atlas.content.pdf import AutoPDF
 from agsci.atlas.content.article import IArticle
 from agsci.atlas.content.video import IVideo
 from agsci.atlas.content.event.group import IEventGroup
+from agsci.atlas.content.event.webinar import IWebinar
 from agsci.atlas.content.online_course.group import IOnlineCourseGroup
 from agsci.atlas.content.behaviors import IAtlasAudience, IAtlasAudienceSkillLevel
 from agsci.atlas.cron.jobs.magento import MagentoJob
@@ -120,6 +121,21 @@ class ExtensionBotView(PloneSiteView):
                 items_html = "<ul>%s</ul>" % " ".join(items)
                 html.append(items_html)
 
+            return " ".join(html)
+
+        elif IWebinar.providedBy(self.context):
+
+            # Start with group HTML
+            html = [
+                getBodyHTML(self.context.aq_parent),
+            ]
+
+            _ = self.webinar_recording_transcript
+
+            if _:
+                html.append("<h2>Transcript</h2>")
+                html.append(_)
+            
             return " ".join(html)
 
         return getBodyHTML(self.context)
@@ -578,3 +594,19 @@ class ExtensionBotPSUCventEventView(ExtensionBotPSUView):
         if not super(ExtensionBotPSUCventEventView, self).null_record:
             return self.parent_extensionbot_view.null_record
         return True
+
+class ExtensionBotPSUWebinarRecordingView(ExtensionBotPSUView):
+
+    @property
+    def webinar_recording_transcript(self):
+        return self.api_data.get('transcript', None)
+
+    @property
+    def has_transcript(self):
+        return not not self.webinar_recording_transcript
+
+    @property
+    def null_record(self):
+        if self.parent_extensionbot_view.null_record:
+            return True
+        return not self.has_transcript
