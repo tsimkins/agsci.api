@@ -27,7 +27,7 @@ class PloneSiteView(BaseView):
     # will be handled separately (in the directory)
     exclude_types = ['Person', ]
 
-    def products(self, sku=[], uid=[]):
+    def products(self, sku=[], uid=[], cvent_id=[], ):
 
         # Query for object having UID, if that parameter is provided
         if uid:
@@ -53,6 +53,20 @@ class PloneSiteView(BaseView):
 
                 return results
 
+        # Query for object having CventId, if that parameter is provided
+        if cvent_id:
+
+            if isinstance(cvent_id, str):
+                cvent_id = [cvent_id,]
+
+            _ids = [x.lower() for x in cvent_id]
+            _ids.extend([x.upper() for x in cvent_id])
+
+            return self.portal_catalog.searchResults({
+                'CventId' : _ids,
+                'Type' : 'Cvent Event',
+            })
+
     def getData(self, **kwargs):
 
         # Data structure to return
@@ -61,19 +75,21 @@ class PloneSiteView(BaseView):
         # URL parameters
         uid = self.uids
         sku = self.skus
+        cvent_id = self.cvent_ids
 
         modified = self.getModifiedCriteria()
 
         # Query for object having UID(s) or SKU(s), if those parameter are provided
-        if uid or sku:
+        if uid or sku or cvent_id:
 
-            results = self.products(uid=uid, sku=sku)
+            results = self.products(uid=uid, sku=sku, cvent_id=cvent_id)
 
             if results:
 
                 return {
                     'sku' : sku,
                     'plone_id' : uid,
+                    'cvent_id' : cvent_id,
                     'contents' : [x.getObject().restrictedTraverse('@@api').getData() for x in results]
                 }
 
@@ -149,6 +165,11 @@ class PloneSiteView(BaseView):
     @property
     def skus(self):
         return self.fmt_param(self.request.get('SKU', self.request.get('sku', None)))
+
+    @property
+    def cvent_ids(self):
+        return self.fmt_param(self.request.get('CventId', self.request.get('cventid', None)))
+
 
     @property
     def magento_data(self):
