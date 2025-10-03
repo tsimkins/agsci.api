@@ -135,7 +135,7 @@ class ExtensionBotView(PloneSiteView):
             if _:
                 html.append("<h2>Transcript</h2>")
                 html.append(_)
-            
+
             return " ".join(html)
 
         return getBodyHTML(self.context)
@@ -610,3 +610,6 @@ class ExtensionBotPSUWebinarRecordingView(ExtensionBotPSUView):
         if self.parent_extensionbot_view.null_record:
             return True
         return not self.has_transcript
+
+    def getPublicURL(self):
+        return self.api_data.get('webinar_recorded_url', None)
