@@ -25,7 +25,9 @@ class PloneSiteView(BaseView):
 
     # Exclude these Types of objects from output.  Specifically, Person objects
     # will be handled separately (in the directory)
-    exclude_types = ['Person', ]
+    #
+    # Podcasts are temporarily excluded until Salesforce and Magento are ready.
+    exclude_types = ['Person', 'Podcast', 'Podcast Group']
 
     def products(self, sku=[], uid=[], cvent_id=[], ):
 
