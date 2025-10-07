@@ -142,6 +142,15 @@
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
+    <!-- Extensionbot PSU for Podcasts -->
+    <browser:page
+        for="agsci.atlas.content.podcast.IPodcast"
+        name="extensionbot-psu"
+        class=".plone_types.extensionbot.ExtensionBotPSUPodcastView"
+        permission="zope.Public"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
+        />
+
     <!-- Extensionbot PSU for Person -->
     <browser:page
         for="agsci.person.content.person.IPerson"

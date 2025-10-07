@@ -613,3 +613,8 @@ class ExtensionBotPSUWebinarRecordingView(ExtensionBotPSUView):
 
     def getPublicURL(self):
         return self.api_data.get('webinar_recorded_url', None)
+
+class ExtensionBotPSUPodcastView(ExtensionBotPSUView):
+
+    def getPublicURL(self):
+        return self.api_data.get('video_url', None)
