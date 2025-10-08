@@ -618,3 +618,8 @@ class ExtensionBotPSUPodcastView(ExtensionBotPSUView):
 
     def getPublicURL(self):
         return self.api_data.get('video_url', None)
+
+    # Temporarily using UID as SKU
+    @property
+    def sku(self):
+        return self.context.UID()
