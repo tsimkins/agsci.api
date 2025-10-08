@@ -657,6 +657,10 @@ class BaseView(BrowserView):
             elif isinstance(v, RichTextValue):
                 data[k] = v.output
 
+            # If it's Missing.Value, it's None
+            elif isinstance(v, Missing.Value.__class__):
+                data[k] = None
+
         return data
 
     # Fields that are required to be in the API output, even with a NULL vlaue
