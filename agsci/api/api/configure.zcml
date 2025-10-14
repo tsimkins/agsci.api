@@ -160,4 +160,13 @@
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
+    <!-- Extensionbot PSU for County Offices -->
+    <browser:page
+        for="agsci.atlas.content.county.ICounty"
+        name="extensionbot-psu"
+        class=".plone_types.extensionbot.ExtensionBotPSUCountyView"
+        permission="zope.Public"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
+        />
+
 </configure>

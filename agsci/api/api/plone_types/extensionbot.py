@@ -623,3 +623,23 @@ class ExtensionBotPSUPodcastView(ExtensionBotPSUView):
     @property
     def sku(self):
         return self.context.UID()
+
+class ExtensionBotPSUCountyView(ExtensionBotPSUView):
+
+    api_merge_keys = [
+        'email_address',
+        'phone',
+        'county',
+        'address',
+        'city',
+        'state',
+        'zip',
+        'latitude',
+        'longitude',
+        'office_hours',
+        'venue',
+    ]
+
+    @property
+    def hidden(self):
+        return False
