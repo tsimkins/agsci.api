@@ -7,7 +7,7 @@ from . import PloneSiteView
 import re
 
 from agsci.atlas.constants import DELIMITER, ACTIVE_REVIEW_STATES
-from agsci.atlas.utilities import SitePeople, ploneify, getBodyHTML
+from agsci.atlas.utilities import SitePeople, ploneify, getBodyHTML, isExternalStore, encode_blob
 from agsci.atlas.content.pdf import AutoPDF
 from agsci.atlas.content.article import IArticle
 from agsci.atlas.content.video import IVideo
@@ -642,3 +642,67 @@ class ExtensionBotPSUCountyView(ExtensionBotPSUView):
     @property
     def hidden(self):
         return False
+
+class ExtensionBotPSUPublicationView(ExtensionBotPSUView):
+
+    api_merge_keys = [
+        'price',
+    ]
+
+    @property
+    def sku(self):
+
+        api_data = self.api_data
+
+        if 'contents' in api_data and api_data['contents']:
+            for _ in api_data['contents']:
+                if _.get('plone_product_type', None) in ('Publication Print',) \
+                    and _.get('sku', None):
+                        return _['sku']
+
+        return super(ExtensionBotPSUPublicationView, self).sku
+
+    @property
+    def pdf(self):
+        pdf_field = getattr(self.context.aq_base, 'pdf', None)
+
+        if pdf_field:
+            (pdf__mimetype, pdf_data) = encode_blob(pdf_field)
+
+            if pdf__mimetype in ('application/pdf',):
+                return pdf_data
+
+    @property
+    def isExternalStore(self):
+        return isExternalStore(self.context.aq_base)
+
+    @property
+    def isEducationalPublication(self):
+        publication_type = getattr(self.context.aq_base, 'internal_store_publication_type', None)
+        if publication_type:
+            return any([x in ('Educational Publications') for x in publication_type])
+
+        return False
+
+
+    # Is the product not expired/archived
+    @property
+    def active(self):
+        if super(ExtensionBotPSUPublicationView, self).active:
+
+            if not self.isExternalStore:
+                return False
+
+            if not self.isEducationalPublication:
+                return False
+
+            return True
+
+        return False
+
+    @property
+    def additional_fields(self):
+
+        return {
+            'pdf' : self.pdf
+        }
