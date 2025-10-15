@@ -637,7 +637,6 @@ class ExtensionBotPSUCountyView(ExtensionBotPSUView):
         'latitude',
         'longitude',
         'office_hours',
-        'venue',
     ]
 
     @property
