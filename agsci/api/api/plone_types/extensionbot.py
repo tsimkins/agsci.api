@@ -700,9 +700,42 @@ class ExtensionBotPSUPublicationView(ExtensionBotPSUView):
 
         return False
 
+    def get_normalized_sku(self, sku):
+        results = self.portal_catalog.searchResults({
+            'SKU' : sku,
+            'review_state' : ACTIVE_REVIEW_STATES,
+        })
+
+        if not results:
+            results = self.portal_catalog.searchResults({
+                'SKU' : sku,
+            })
+
+        if results:
+            o = results[0].getObject()
+            v = o.restrictedTraverse('@@extensionbot-psu')
+            return v.sku
+
+    @property
+    def alternate_language(self):
+        rv = []
+
+        api_data = self.api_data
+
+        if 'alternate_language' in api_data and api_data['alternate_language']:
+            for _ in api_data['alternate_language']:
+                sku = _.get('sku', None)
+                language = _.get('language', None)
+                _sku = self.get_normalized_sku(sku)
+                if _sku:
+                    rv.append({'sku' : _sku, 'language' : language})
+
+        return rv
+
     @property
     def additional_fields(self):
 
         return {
-            'pdf' : self.pdf
+            'pdf' : self.pdf,
+            'alternate_language' : self.alternate_language,
         }
