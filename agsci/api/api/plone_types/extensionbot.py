@@ -648,7 +648,6 @@ class ExtensionBotPSUPublicationView(ExtensionBotPSUView):
     api_merge_keys = [
         'price',
         'language',
-        'product_type',
     ]
 
     @property
@@ -740,4 +739,5 @@ class ExtensionBotPSUPublicationView(ExtensionBotPSUView):
         return {
             'pdf' : self.pdf,
             'alternate_language' : self.alternate_language,
+            'product_type' : 'Publication',
         }
