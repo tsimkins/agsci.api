@@ -648,6 +648,7 @@ class ExtensionBotPSUPublicationView(ExtensionBotPSUView):
     api_merge_keys = [
         'price',
         'language',
+        'pages_count',
     ]
 
     @property
