@@ -144,58 +144,61 @@ class ExtensionBotView(PloneSiteView):
 
         description = self.context.Description()
 
-        html = self.getHTML()
-
-        if not html:
-            return []
-
-        # Remove divs and spans
-        html = re.sub(r'</*(div|span).*?>', '', html)
-
-        # Remove attributes
-        for _ in ['id', 'class', 'style', 'data-cvent-id']:
-            html = re.sub(r' %s=".*?"' % _, '', html)
-
-        soup = BeautifulSoup(html, features="lxml")
-
-        # Fix links to other content on the site
-        for a in soup.findAll('a'):
-            href = a.get('href')
-            url = self.pdf_view.getURLForUID(href)
-            if url:
-                a['href'] = url
-
-        # Extract img tags
-        for _ in soup.findAll(['iframe', 'embed','img']):
-            _ = _.extract()
-
         _rv = []
 
-        _ = self.getContentStruct(
-            content_text = "<p>%s</p>" % description
-        )
+        if description:
 
-        for el in soup.body.findAll(recursive=False):
-            # Skip blank
+            _rv.append(
+                self.getContentStruct(
+                    content_text = "<p>%s</p>" % description
+                )
+            )
 
-            if not el.text:
-                continue
+        html = self.getHTML()
 
-            if el.name in ['h%d' % x for x in range(1,7)]:
-                _ = self.getContentStruct()
-                _['content_header'] = str(el)
-                _rv.append(_)
+        if html:
 
-            else:
+            # Remove divs and spans
+            html = re.sub(r'</*(div|span).*?>', '', html)
 
-                if not _rv:
+            # Remove attributes
+            for _ in ['id', 'class', 'style', 'data-cvent-id']:
+                html = re.sub(r' %s=".*?"' % _, '', html)
+
+            soup = BeautifulSoup(html, features="lxml")
+
+            # Fix links to other content on the site
+            for a in soup.findAll('a'):
+                href = a.get('href')
+                url = self.pdf_view.getURLForUID(href)
+                if url:
+                    a['href'] = url
+
+            # Extract img tags
+            for _ in soup.findAll(['iframe', 'embed','img']):
+                _ = _.extract()
+
+            for el in soup.body.findAll(recursive=False):
+                # Skip blank
+
+                if not el.text:
+                    continue
+
+                if el.name in ['h%d' % x for x in range(1,7)]:
+                    _ = self.getContentStruct()
+                    _['content_header'] = str(el)
                     _rv.append(_)
 
-                _rv[-1]['content_text'] = _rv[-1]['content_text'] + str(el)
+                else:
 
-        for _ in _rv:
-            if 'content_text' not in _ or not _['content_text']:
-                _['content_text'] = "<p></p>"
+                    if not _rv:
+                        _rv.append(_)
+
+                    _rv[-1]['content_text'] = _rv[-1]['content_text'] + str(el)
+
+            for _ in _rv:
+                if 'content_text' not in _ or not _['content_text']:
+                    _['content_text'] = "<p></p>"
 
         return _rv
 
