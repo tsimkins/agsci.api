@@ -1,3 +1,4 @@
+from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
 from bs4 import BeautifulSoup
 from plone.app.textfield.value import RichTextValue
@@ -499,17 +500,40 @@ class ExtensionBotPersonView(ExtensionBotPSUView):
 class ExtensionBotPSUOnlineCourseGroupView(ExtensionBotPSUView):
 
     @property
+    def child_courses(self):
+
+        def registration_open(o):
+            registration_deadline = getattr(o.aq_base, 'registration_deadline', None)
+            if registration_deadline:
+                return DateTime(registration_deadline) > DateTime()
+            return True
+
+        _ = self.context.listFolderContents({'Type' : 'Online Course'})
+        _ = [x for x in _ if self.wftool.getInfoFor(x, 'review_state') in ACTIVE_REVIEW_STATES]
+        _ = [x for x in _ if registration_open(x)]
+
+        return sorted(_, key=lambda x: x.effective())
+
+    # If the OLC-G is active, verify that it has child courses you can register for.
+    @property
+    def active(self):
+        if super(ExtensionBotPSUOnlineCourseGroupView, self).active:
+
+            return not not self.child_courses
+
+        return False
+
+    @property
     def additional_fields(self):
+
 
         _rv = {
             'product_type' : 'Online Course',
         }
 
-        children = self.context.listFolderContents({'Type' : 'Online Course'})
-        children = [x for x in children if self.wftool.getInfoFor(x, 'review_state') in ACTIVE_REVIEW_STATES]
+        children = self.child_courses
 
         if children:
-            children.sort(key=lambda x: x.effective())
             o = children[-1]
             v = o.restrictedTraverse('@@extensionbot-psu')
             if v.active:
