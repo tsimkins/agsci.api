@@ -193,7 +193,7 @@ class ExtensionBotView(PloneSiteView):
                 else:
 
                     if not _rv:
-                        _rv.append(_)
+                        _rv.append(self.getContentStruct())
 
                     _rv[-1]['content_text'] = _rv[-1]['content_text'] + str(el)
 
