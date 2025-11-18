@@ -368,6 +368,11 @@ class ExtensionBotPSUView(ExtensionBotView):
     def additional_fields(self):
         return {}
 
+    @property
+    def primary_program_team(self):
+        api_data = self.api_data
+        return api_data.get('epas_primary_team', {}).get('team')
+
     def getData(self, **kwargs):
 
         if self.null_record:
@@ -394,6 +399,7 @@ class ExtensionBotPSUView(ExtensionBotView):
             'content' : self.getContent(),
             'category' : categories,
             'publication_id' : self.sku,
+            'primary_program_team' : self.primary_program_team,
         }
 
         if _rv:
