@@ -38,12 +38,14 @@ import logging
 import pickle
 import re
 import redis
+import time
 import xml.dom.minidom
 
 from agsci.atlas.utilities import toISO, encode_blob, getAllSchemaFields, \
                                   getAllSchemaFieldsAndDescriptions, getEmptyValue, \
                                   getBaseSchema, execute_under_special_role, \
-                                  getBodyHTML, get_internal_store_categories, get_image_info
+                                  getBodyHTML, get_internal_store_categories, get_image_info, \
+                                  zope_log
 
 # Custom Atlas Schemas
 from agsci.atlas.content import atlas_schemas, IAtlasProduct
@@ -943,6 +945,9 @@ class BaseView(BrowserView):
                                     if html and isinstance(html, (str,)):
                                         _['product_description'] = self.fix_cvent_html(html)
 
+                        # Only include agenda items where `magento_agenda` is True
+#                        data['product_detail'] = [x for x in data['product_detail'] if isinstance(x, dict) and x.get('magento_agenda', False)]
+
             # Calculate/update fields if we're a Cvent event
             if IExternalEvent.providedBy(self.context):
 
@@ -1282,6 +1287,8 @@ class BaseView(BrowserView):
 
     def __call__(self):
 
+        _start = time.perf_counter()
+
         # If we didn't get a value passed in for 'expensive', set it to the view default.
         if 'expensive' not in self.request.form:
             self.request.form['expensive'] = '%r' % self.expensive
@@ -1295,7 +1302,11 @@ class BaseView(BrowserView):
         # Pass back JSON or XML data, while setting request header.
         if data_format == 'json':
             self.request.response.setHeader('Content-Type', 'application/json')
-            return self.getJSON()
+            json_data = self.getJSON()
+            _end = time.perf_counter()
+            _elapsed = _end - _start
+            zope_log("[JSON_API_TIME] UID: %s, URL: %s, Elapsed: %0.2f" % (self.context.UID(), self.context.absolute_url(), _elapsed))
+            return json_data
 
         elif data_format == 'xml':
             self.request.response.setHeader('Content-Type', 'application/xml')
