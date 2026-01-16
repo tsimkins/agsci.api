@@ -98,8 +98,8 @@ class ExpiringOwnerProducts(MagentoView):
 
         sp = SitePeople(active=False)
         agcomm_people = self.agcomm_people
-
-        for r in self.get_products_owned_by(self.expiring_people):
+        expiring_people = self.expiring_people
+        for r in self.get_products_owned_by(expiring_people):
 
             o = r.getObject()
 
@@ -128,7 +128,7 @@ class ExpiringOwnerProducts(MagentoView):
 
                 owners = EPAS_TEAM_LEADERS.get(epas_primary_team, [])
 
-                owners = [x for x in owners if x]
+                owners = [x for x in owners if x and x not in expiring_people]
 
                 # If no team leads assigned, go with the ADP
                 if not owners:
@@ -139,7 +139,7 @@ class ExpiringOwnerProducts(MagentoView):
                             owners.extend(EPAS_UNIT_LEADERS.get(_, []))
 
             # Cleanup
-            owners = [x for x in owners if x]
+            owners = [x for x in owners if x and x not in expiring_people]
             owners = sorted(set(owners))
 
             # If our new owners don't match the original, add this to the rv
