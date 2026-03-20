@@ -15,6 +15,7 @@ from agsci.atlas.content.video import IVideo
 from agsci.atlas.content.event.group import IEventGroup
 from agsci.atlas.content.event.webinar import IWebinar
 from agsci.atlas.content.online_course.group import IOnlineCourseGroup
+from agsci.atlas.content.publication import IPublication
 from agsci.atlas.content.behaviors import IAtlasAudience, IAtlasAudienceSkillLevel
 from agsci.atlas.cron.jobs.magento import MagentoJob
 from agsci.person.content.person import IPerson
@@ -77,7 +78,9 @@ class ExtensionBotView(PloneSiteView):
                     html = getBodyHTML(self.context)
                     return " ".join([x for x in (html, transcript) if x])
 
-        elif IEventGroup.providedBy(self.context) or IOnlineCourseGroup.providedBy(self.context):
+        elif IEventGroup.providedBy(self.context) or IOnlineCourseGroup.providedBy(self.context) or \
+            IPublication.providedBy(self.context):
+
             html = getBodyHTML(self.context)
             audience_html = []
 
@@ -89,7 +92,7 @@ class ExtensionBotView(PloneSiteView):
                         if isinstance(v, RichTextValue):
                             v = v.output
 
-                        if isinstance(v, str):
+                        if isinstance(v, str) and BeautifulSoup(v, features="lxml").text:
                             audience_html.append(
                                 "<h2>%s</h2>%s" % (_desc.title, v)
                             )
