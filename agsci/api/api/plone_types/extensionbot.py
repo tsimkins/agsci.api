@@ -430,6 +430,7 @@ class ExtensionBotPersonView(ExtensionBotPSUView):
     api_merge_keys = [
         'email_address',
         'person_job_title',
+        'person_job_titles',
         'person_classification',
         'phone',
         'county',
