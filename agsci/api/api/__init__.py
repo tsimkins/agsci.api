@@ -381,6 +381,10 @@ class BaseView(BrowserView):
         # Exclude empty non-required fields
         data = self.remove_empty_nonrequired_fields(data)
 
+        # Explicitly send a null value through for these fields
+        # to overwrite previous values.
+        data = self.delete_fields(data)
+
         # Treat expiring soon items as published
         data = self.fix_review_state(data)
 
@@ -392,6 +396,19 @@ class BaseView(BrowserView):
         if 'plone_status' in data:
             if data['plone_status'] == 'expiring_soon':
                 data['plone_status'] = 'published'
+
+        return data
+
+    # Explicitly send through a null value for specified fields
+    def delete_fields(self, data):
+
+        fields = [
+            'pdf_sample',
+        ]
+
+        for _ in fields:
+            if _ in data and data[_]:
+                data[_] = None
 
         return data
 
