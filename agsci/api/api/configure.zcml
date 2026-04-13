@@ -124,6 +124,15 @@
         layer="agsci.atlas.browser.interfaces.IThemeSpecific"
         />
 
+    <!-- Extensionbot PSU for External Events -->
+    <browser:page
+        for="agsci.atlas.content.event.external.IExternalEvent"
+        name="extensionbot-psu"
+        class=".plone_types.extensionbot.ExtensionBotPSUCventEventView"
+        permission="zope.Public"
+        layer="agsci.atlas.browser.interfaces.IThemeSpecific"
+        />
+
     <!-- Extensionbot PSU for Online Course Groups -->
     <browser:page
         for="agsci.atlas.content.online_course.group.IOnlineCourseGroup"
