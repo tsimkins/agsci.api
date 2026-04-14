@@ -399,16 +399,17 @@ class BaseView(BrowserView):
 
         return data
 
-    # Explicitly send through a null value for specified fields
+    # Explicitly send through a null or false value for specified fields
     def delete_fields(self, data):
 
         fields = [
-            'pdf_sample',
+            ('pdf_sample', None),
+            ('pdf_autogenerate', False),
         ]
 
-        for _ in fields:
-            if _ in data and data[_]:
-                data[_] = None
+        for (k,v) in fields:
+            if k in data and data[k]:
+                data[k] = v
 
         return data
 
