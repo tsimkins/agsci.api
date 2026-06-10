@@ -146,7 +146,7 @@ class ExpiringOwnerProducts(MagentoView):
             if tuple(owners) != tuple(_owners):
 
                 _rv.append({
-                    'sku' : r.SKU,
+                    'sku' : r.SKU and r.SKU or None,
                     'plone_product_type' : r.Type,
                     'plone_id' : r.UID,
                     'plone_url' : r.getURL(),
