@@ -57,8 +57,12 @@ from agsci.atlas.content.behaviors import IShadowProduct, ISubProduct, \
                                           IAtlasProductCategoryMetadata, \
                                           IAtlasInternalMetadata
 
+from agsci.atlas.content.event import IEvent
 from agsci.atlas.content.event.cvent import ICventEvent
 from agsci.atlas.content.event.external import IExternalEvent
+from agsci.atlas.content.event.workshop import IWorkshop
+from agsci.atlas.content.event.webinar import IWebinar
+from agsci.atlas.content.event.conference import IConference
 from agsci.atlas.content.event.group import IEventGroup
 from agsci.atlas.content.publication import IPublication
 from agsci.atlas.constants import DELIMITER, V_CS, INTERNAL_STORE_CATEGORY_LEVEL_1, \
@@ -835,7 +839,7 @@ class BaseView(BrowserView):
             'Smart Sheet' : 'Smart Sheets',
             'Webinar' : 'Webinar',
             'Webinar Group' : 'Webinar',
-            'Workshop' : 'Workshop Simple',
+            'Workshop' : 'Workshop Complex',
             'Workshop Group' : 'Workshop Complex'
         }
 
@@ -911,6 +915,12 @@ class BaseView(BrowserView):
             },
         }
 
+        # Event Type by Plone interface
+        plone_event_type_interface = {
+            IWorkshop : 'Workshop',
+            IWebinar : 'Webinar',
+            IConference : 'Conference',
+        }
         # One-off for External events.  Event Type (manually set) to
         # `attribute_set` and `education_format`
         # This is just a copy of the Cvent mapping for now
@@ -963,11 +973,9 @@ class BaseView(BrowserView):
                                     if html and isinstance(html, (str,)):
                                         _['product_description'] = self.fix_cvent_html(html)
 
-                        # Only include agenda items where `magento_agenda` is True
-#                        data['product_detail'] = [x for x in data['product_detail'] if isinstance(x, dict) and x.get('magento_agenda', False)]
 
-            # Calculate/update fields if we're a Cvent event
-            if IExternalEvent.providedBy(self.context):
+            # Calculate/update fields if we're another type of event
+            elif IExternalEvent.providedBy(self.context):
 
                 # Calculate `attribute_set` and `education_format`
                 # based on the Event Type attribute of the Cvent event
@@ -976,6 +984,18 @@ class BaseView(BrowserView):
                 # Update data fields
                 _data.update(external_event_type_mapping.get(event_type, {}))
 
+            elif IEvent.providedBy(self.context):
+                for (iface, event_type) in plone_event_type_interface.items():
+                    if iface.providedBy(self.context):
+                        # Set event type based on schema interface
+                        _data['event_type'] = event_type
+
+                        # Send explicit blank Cvent fields
+                        _data.update({
+                            'cvent_event_code' : None,
+                            'cvent_id' : None,
+                            'cvent_url' : None,
+                        })
             # Set `product_platform` if we're a Publication
             elif IPublication.providedBy(self.context):
                 data['product_platform'] = 'Salesforce'
